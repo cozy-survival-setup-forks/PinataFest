@@ -3,6 +3,8 @@ package dev.pinatafest.pinata;
 import dev.pinatafest.config.Settings;
 import dev.pinatafest.message.Messages;
 import dev.pinatafest.reward.Rewards;
+import dev.pinatafest.spawn.SpawnPoint;
+import dev.pinatafest.spawn.SpawnStore;
 import dev.pinatafest.vote.VoteStore;
 import net.kyori.adventure.bossbar.BossBar;
 import org.bukkit.Bukkit;
@@ -23,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -63,6 +66,7 @@ public final class PinataService {
     private final Supplier<Settings> settings;
     private final Messages messages;
     private final VoteStore store;
+    private final SpawnStore spawns;
     private final PartyVisibility visibility;
     private final Map<UUID, Pinata> active = new HashMap<>();
     private final List<Party> parties = new ArrayList<>();
@@ -71,11 +75,13 @@ public final class PinataService {
     private long tick;
     private boolean wasActive;
 
-    public PinataService(Plugin plugin, Supplier<Settings> settings, Messages messages, VoteStore store) {
+    public PinataService(Plugin plugin, Supplier<Settings> settings, Messages messages, VoteStore store,
+                         SpawnStore spawns) {
         this.plugin = plugin;
         this.settings = settings;
         this.messages = messages;
         this.store = store;
+        this.spawns = spawns;
         this.visibility = new PartyVisibility(plugin, settings, this::activeWorlds);
     }
 
@@ -116,7 +122,8 @@ public final class PinataService {
     /** Counts a vote towards the next pinata. Offline votes count too. */
     public void countVote(String voter) {
         final Settings.Party party = settings.get().party();
-        if (party.votesNeeded() == 0 || party.locations().isEmpty()) {
+        final List<String> places = party.locations().isEmpty() ? List.copyOf(spawnPoints().keySet()) : party.locations();
+        if (party.votesNeeded() == 0 || places.isEmpty()) {
             return;
         }
 
@@ -124,8 +131,7 @@ public final class PinataService {
         if (count >= party.votesNeeded()) {
             store.setPinataVotes(count - party.votesNeeded());
             messages.broadcast("vote_goal", Messages.text("player", voter));
-            final List<String> spots = party.locations();
-            summon(spots.get(ThreadLocalRandom.current().nextInt(spots.size())), party.amount());
+            summon(places.get(ThreadLocalRandom.current().nextInt(places.size())), party.amount());
         } else {
             store.setPinataVotes(count);
             messages.broadcast("vote_progress", Messages.text("player", voter), Messages.text("count", count),
@@ -137,25 +143,30 @@ public final class PinataService {
         return Math.max(0, settings.get().party().votesNeeded() - store.pinataVotes());
     }
 
-    /** Starts a party at a named location. Returns false if the location or its world is not usable. */
-    public boolean summon(String spotName, int amount) {
-        final Settings.Spot spot = settings.get().party().spots().get(spotName.toLowerCase(Locale.ROOT));
-        if (spot == null) {
-            return false;
-        }
-        final World world = Bukkit.getWorld(spot.world());
-        if (world == null) {
-            plugin.getLogger().warning("Pinata location " + spotName + " uses world " + spot.world()
-                    + ", which is not loaded");
-            return false;
-        }
-        final double y = Double.isNaN(spot.y()) ? world.getHighestBlockYAt((int) spot.x(), (int) spot.z()) + 1 : spot.y();
-        begin(new Location(world, spot.x(), y, spot.z()), amount);
-        return true;
+    /** Every spawn point: the ones from config.yml, then those saved in game, which win on a shared name. */
+    public Map<String, SpawnPoint> spawnPoints() {
+        final Map<String, SpawnPoint> all = new LinkedHashMap<>(settings.get().party().spots());
+        all.putAll(spawns.all());
+        return all;
     }
 
     public Collection<String> locationNames() {
-        return settings.get().party().spots().keySet();
+        return spawnPoints().keySet();
+    }
+
+    /** Starts a party at a named spawn point. Returns false if the point or its world is not usable. */
+    public boolean summon(String spotName, int amount) {
+        final SpawnPoint point = spawnPoints().get(spotName.toLowerCase(Locale.ROOT));
+        if (point == null) {
+            return false;
+        }
+        final Location where = point.pick(ThreadLocalRandom.current());
+        if (where == null) {
+            plugin.getLogger().warning("Spawn point " + spotName + " uses world " + point.world() + ", which is not loaded");
+            return false;
+        }
+        begin(where, amount);
+        return true;
     }
 
     private void begin(Location where, int amount) {

@@ -8,6 +8,7 @@ import dev.pinatafest.hook.VotifierHook;
 import dev.pinatafest.message.Messages;
 import dev.pinatafest.pinata.PinataListener;
 import dev.pinatafest.pinata.PinataService;
+import dev.pinatafest.spawn.SpawnStore;
 import dev.pinatafest.vote.VoteService;
 import dev.pinatafest.vote.VoteStore;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
@@ -28,6 +29,7 @@ public class PinataFestPlugin extends JavaPlugin implements Listener {
     private volatile Settings settings;
     private Messages messages;
     private VoteStore store;
+    private SpawnStore spawns;
     private VoteService votes;
     private PinataService pinatas;
 
@@ -41,7 +43,9 @@ public class PinataFestPlugin extends JavaPlugin implements Listener {
         store.load(getLogger());
         messages = new Messages(this);
         messages.load();
-        pinatas = new PinataService(this, () -> settings, messages, store);
+        spawns = new SpawnStore(getDataFolder().toPath().resolve("spawns.yml"));
+        spawns.load(getLogger());
+        pinatas = new PinataService(this, () -> settings, messages, store, spawns);
         votes = new VoteService(this, () -> settings, store, messages, pinatas);
 
         if (!VotifierHook.register(this, votes::receive)) {
@@ -55,7 +59,7 @@ public class PinataFestPlugin extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(this, this);
         getServer().getPluginManager().registerEvents(new PinataListener(this, pinatas), this);
 
-        final PinataFestCommand commands = new PinataFestCommand(this, () -> settings, store, votes, pinatas, messages);
+        final PinataFestCommand commands = new PinataFestCommand(this, () -> settings, store, votes, pinatas, spawns, messages);
         getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, event -> {
             event.registrar().register(commands.pinatafest().build(), "Votes, pinatas and admin tools", List.of("pf"));
             event.registrar().register(commands.visibility().build(), "Hide other players during pinata parties", List.of());
@@ -83,6 +87,7 @@ public class PinataFestPlugin extends JavaPlugin implements Listener {
     public void reload() {
         reloadConfig();
         settings = Settings.load(getConfig(), getLogger());
+        spawns.load(getLogger());
         messages.load();
     }
 

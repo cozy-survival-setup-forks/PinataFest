@@ -1,5 +1,6 @@
 package dev.pinatafest.config;
 
+import dev.pinatafest.spawn.SpawnPoint;
 import dev.pinatafest.util.Durations;
 import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.key.Key;
@@ -36,12 +37,8 @@ public record Settings(Votes votes, Party party, PinataSettings pinata, Visibili
     }
 
     /** What starts a pinata party: enough votes, and where it happens. */
-    public record Party(int votesNeeded, int amount, List<String> locations, Map<String, Spot> spots,
+    public record Party(int votesNeeded, int amount, List<String> locations, Map<String, SpawnPoint> spots,
                         Countdown countdown) {
-    }
-
-    /** A named place a pinata can appear. A NaN y means the highest block. */
-    public record Spot(String world, double x, double y, double z) {
     }
 
     /** A null colour means the bar cycles through all of them. */
@@ -142,30 +139,23 @@ public record Settings(Votes votes, Party party, PinataSettings pinata, Visibili
         // ---- party ----
 
         private Party party() {
-            final Map<String, Spot> spots = new HashMap<>();
+            final Map<String, SpawnPoint> spots = new HashMap<>();
             final ConfigurationSection section = cfg.getConfigurationSection("pinata.locations");
             if (section != null) {
                 for (String name : section.getKeys(false)) {
-                    final ConfigurationSection spot = section.getConfigurationSection(name);
-                    if (spot == null || spot.getString("world") == null) {
-                        log.warning("pinata.locations." + name + " needs a world, skipping it");
-                        continue;
+                    final ConfigurationSection entry = section.getConfigurationSection(name);
+                    final SpawnPoint point = entry == null ? null : SpawnPoint.read(entry);
+                    if (point == null) {
+                        log.warning("pinata.locations." + name + " is missing a world or coordinates, skipping it");
+                    } else {
+                        spots.put(name.toLowerCase(Locale.ROOT), point);
                     }
-                    final Object y = spot.get("y");
-                    spots.put(name.toLowerCase(Locale.ROOT), new Spot(spot.getString("world"),
-                            spot.getDouble("x"), y instanceof Number n ? n.doubleValue() : Double.NaN,
-                            spot.getDouble("z")));
                 }
             }
 
             final List<String> names = new ArrayList<>();
             for (String name : cfg.getStringList("pinata.auto_summon.locations")) {
-                final String key = name.toLowerCase(Locale.ROOT);
-                if (spots.containsKey(key)) {
-                    names.add(key);
-                } else {
-                    log.warning("pinata.auto_summon.locations: no location called " + name + ", skipping it");
-                }
+                names.add(name.toLowerCase(Locale.ROOT));
             }
             return new Party(
                     Math.max(0, cfg.getInt("pinata.auto_summon.votes_needed", 20)),

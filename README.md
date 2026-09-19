@@ -27,6 +27,21 @@ permission, certain items or a recent vote.
   their rewards are saved and paid out after they log in, with an optional limit
 - Particle and sound when a player votes
 
+## Spawn points
+
+There is no limit on spawn points, across as many worlds as you like. Each one is either
+
+- **fixed**: one exact spot,
+- **area**: a random point inside a rectangle, on the highest block there, or
+- **zone**: a random point anywhere inside a box, height included.
+
+Stand where you want it and run `/pinatafest setspawn <name>` for a fixed spot. Add `2d` or `3d`
+and a radius for an area or a zone around you, for example `/pinatafest setspawn field 2d 30`. Or
+set two corners with `/pinatafest pos1` and `/pinatafest pos2` and run `setspawn <name> 2d` or
+`setspawn <name> 3d`. Saved points go into `spawns.yml`; `/pinatafest spawns` lists them and
+`/pinatafest delspawn <name>` removes one. Spawn points can also be written by hand under
+`pinata.locations` in `config.yml`.
+
 ## Hiding other players
 
 Players can choose to hide everyone else while a pinata is out, which keeps crowded parties
@@ -43,6 +58,10 @@ this plugin are undone by it, and a title thanks everyone when the last pinata i
 | `/pinatavisibility [hide\|show\|toggle\|status]` | Hide other players during parties | `pinatafest.visibility` (everyone) |
 | `/pinatafest votes <player>` | Someone else's vote count | `pinatafest.admin` |
 | `/pinatafest summon [location]` | Start a party now | `pinatafest.admin` |
+| `/pinatafest setspawn <name> [2d\|3d] [radius]` | Save a spawn point where you stand | `pinatafest.admin` |
+| `/pinatafest pos1`, `/pinatafest pos2` | Pick the two corners of a zone | `pinatafest.admin` |
+| `/pinatafest spawns` | List every spawn point | `pinatafest.admin` |
+| `/pinatafest delspawn <name>` | Delete a saved spawn point | `pinatafest.admin` |
 | `/pinatafest kill` | Remove every pinata and countdown | `pinatafest.admin` |
 | `/pinatafest fake <player> [site]` | Send a test vote | `pinatafest.admin` |
 | `/pinatafest reload` | Reload `config.yml` and `lang.yml` | `pinatafest.admin` |

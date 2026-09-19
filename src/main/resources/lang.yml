@@ -204,3 +204,59 @@ players_only:
   enabled: true
   type: [chat]
   chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>This command is <#FF5484>for players <white>only."
+
+# ---- spawn points ----
+
+spawn_saved:
+  # Placeholders: <name>, <kind>, <world>
+  enabled: true
+  type: [chat]
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>Saved <#FFD068><kind> <white>spawn point <#52D3FF><name> <white>in <#B3E876><world><white>."
+
+spawn_deleted:
+  # Placeholders: <name>
+  enabled: true
+  type: [chat]
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>Removed spawn point <#52D3FF><name><white>."
+
+spawn_missing:
+  # Placeholders: <name>
+  enabled: true
+  type: [chat]
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <#FF5484>There is no saved spawn point called <name><white>."
+
+spawn_error:
+  # Something went wrong writing spawns.yml.
+  enabled: true
+  type: [chat]
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <#FF5484>Could not save spawns.yml, check the console."
+
+spawns_none:
+  # No spawn points at all.
+  enabled: true
+  type: [chat]
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>No spawn points yet. Stand somewhere and use <#FFD068>/pinatafest setspawn NAME<white>."
+
+spawns_header:
+  # Placeholders: <count>
+  enabled: true
+  type: [chat]
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>Spawn points (<#FFD068><count><white>):"
+
+spawns_line:
+  # Placeholders: <name>, <kind>, <world>
+  enabled: true
+  type: [chat]
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <#52D3FF><name> <#B6C1C8>- <#FFD068><kind> <#B6C1C8>in <#B3E876><world>"
+
+corner_set:
+  # Placeholders: <number>, <x>, <y>, <z>
+  enabled: true
+  type: [chat]
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>Corner <#FFD068><number> <white>set at <#52D3FF><x>, <y>, <z><white>."
+
+corners_needed:
+  # Shown when a zone is saved without a radius and both corners are not set.
+  enabled: true
+  type: [chat]
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <#FF5484>Set both corners with /pinatafest pos1 and pos2 first<white>, or give a radius."

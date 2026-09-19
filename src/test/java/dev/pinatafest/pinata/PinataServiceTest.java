@@ -2,6 +2,7 @@ package dev.pinatafest.pinata;
 
 import dev.pinatafest.config.Settings;
 import dev.pinatafest.message.Messages;
+import dev.pinatafest.spawn.SpawnStore;
 import dev.pinatafest.vote.VoteStore;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -77,7 +78,8 @@ class PinataServiceTest {
         final var plugin = MockBukkit.createMockPlugin();
         final Settings settings = Settings.load(YamlConfiguration.loadConfiguration(new StringReader(CONFIG)),
                 Logger.getAnonymousLogger());
-        service = new PinataService(plugin, () -> settings, new Messages(plugin), new VoteStore(dir.resolve("v.yml")));
+        service = new PinataService(plugin, () -> settings, new Messages(plugin), new VoteStore(dir.resolve("v.yml")),
+                new SpawnStore(dir.resolve("s.yml")));
         player = server.addPlayer("Steve");
 
         for (String name : List.of("hitreward", "lastreward", "diereward", "fell")) {

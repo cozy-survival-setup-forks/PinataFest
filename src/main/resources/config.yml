@@ -30,13 +30,33 @@ votes:
       pitch: 1.25
 
 pinata:
-  # Places pinatas can appear. Leave out y to use the highest block.
+  # Places pinatas can appear. You can also save them in game with /pinatafest setspawn NAME
+  # (they go into spawns.yml), and there is no limit on how many there are.
+  #   fixed (the default): one exact spot. Leave out y to use the highest block.
+  #   area: a random point in a rectangle, on the highest block there.
+  #   zone: a random point anywhere inside a box, height included.
   locations:
     spawn:
       world: world
       x: 0.0
       y: 100.0
       z: 0.0
+    # field:
+    #   type: area
+    #   world: world
+    #   min_x: -20
+    #   max_x: 20
+    #   min_z: -20
+    #   max_z: 20
+    # sky:
+    #   type: zone
+    #   world: world
+    #   min_x: -20
+    #   max_x: 20
+    #   min_y: 90
+    #   max_y: 120
+    #   min_z: -20
+    #   max_z: 20
 
   # A party starts on its own after this many votes.
   auto_summon:
@@ -44,7 +64,7 @@ pinata:
     votes_needed: 20
     # How many pinatas appear at once.
     amount: 1
-    # One of these is picked at random.
+    # One of these is picked at random. Leave the list empty to pick from every spawn point.
     locations:
       - spawn
 

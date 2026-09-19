@@ -5,6 +5,7 @@ import com.vexsoftware.votifier.model.VotifierEvent;
 import dev.pinatafest.config.Settings;
 import dev.pinatafest.hook.VotifierHook;
 import dev.pinatafest.message.Messages;
+import dev.pinatafest.spawn.SpawnStore;
 import dev.pinatafest.pinata.PinataService;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -73,7 +74,7 @@ class VoteServiceTest {
         final Settings settings = Settings.load(YamlConfiguration.loadConfiguration(new StringReader(CONFIG)),
                 Logger.getAnonymousLogger());
         final Messages messages = new Messages(plugin);
-        final PinataService pinatas = new PinataService(plugin, () -> settings, messages, store);
+        final PinataService pinatas = new PinataService(plugin, () -> settings, messages, store, new SpawnStore(dir.resolve("s.yml")));
         service = new VoteService(plugin, () -> settings, store, messages, pinatas);
 
         for (String name : List.of("record", "live")) {
