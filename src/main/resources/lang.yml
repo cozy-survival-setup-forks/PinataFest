@@ -2,6 +2,10 @@
 # Every message can be sent as chat, action bar, title or any mix, with an optional sound.
 # Text supports MiniMessage as well as &a and &#RRGGBB codes.
 # The PINATA prefix is written out in every message so each one can be changed on its own.
+#
+# When a new version changes the default messages, this number goes up. An older file is then
+# saved as lang.yml.old and replaced, so new messages and titles are not hidden by stale text.
+lang_version: 2
 
 # ---- vote goal ----
 
@@ -20,7 +24,10 @@ vote_goal:
 party_start:
   # Placeholders: <seconds>
   enabled: true
-  type: [chat]
+  type: [chat, title]
+  title: "<gradient:#FF5484:#FFD068:#B3E876:#66FF83:#52D3FF:#B87CFF><bold>PINATA PARTY"
+  subtitle: "<white>Starting in <#FFD068><seconds> seconds"
+  times: [10, 40, 10]
   chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>A pinata party starts in <#FFD068><seconds> seconds<white>!"
 
 countdown_bar:
@@ -46,7 +53,10 @@ pinata_bar:
 pinata_spawn:
   # Placeholders: <x>, <y>, <z>, <world>
   enabled: true
-  type: [chat]
+  type: [chat, title]
+  title: "<gradient:#FF5484:#FFD068:#B3E876:#66FF83:#52D3FF:#B87CFF><bold>PINATA!"
+  subtitle: "<white>Find it at <#FFD068><x>, <y>, <z>"
+  times: [10, 50, 10]
   chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>A pinata just appeared at <#FFD068><x>, <y>, <z> <white>in <#52D3FF><world><white>!"
   sound:
     key: "minecraft:entity.firework_rocket.launch"
@@ -71,8 +81,35 @@ pinata_expire:
 pinata_teleport:
   # Placeholders: <x>, <y>, <z>
   enabled: true
-  type: [actionbar]
+  type: [chat, actionbar]
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>The pinata teleported to <#FFD068><x>, <y>, <z><white>!"
   actionbar: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>The pinata teleported to <#FFD068><x>, <y>, <z><white>!"
+
+pinata_knockback:
+  # Sent to players near the pinata.
+  enabled: true
+  type: [chat]
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>The pinata <#FF5484>knocked everyone back<white>!"
+
+pinata_shoot_up:
+  enabled: true
+  type: [chat]
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>The pinata <#52D3FF>shot into the air<white>!"
+
+pinata_baby:
+  enabled: true
+  type: [chat]
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>The pinata turned into a <#FFD068>baby<white>, hit it fast!"
+
+pinata_baby_end:
+  enabled: true
+  type: [chat]
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>The pinata <#66FF83>grew back up<white>."
+
+pinata_speed_up:
+  enabled: true
+  type: [chat]
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>The pinata gave everyone nearby a <#66FF83>speed boost<white>!"
 
 party_over:
   # A title for players when the last pinata is gone.

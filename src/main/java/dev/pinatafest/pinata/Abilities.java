@@ -19,6 +19,8 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 final class Abilities {
 
+    private static final double ANNOUNCE_BLOCKS = 64.0;
+
     private final Settings.Abilities settings;
     private final Messages messages;
 
@@ -80,6 +82,7 @@ final class Abilities {
         final Settings.Knockback kb = settings.knockback();
         final Location center = pinata.location();
         play(center.getWorld(), center, kb.sound());
+        tellNearby(pinata, "pinata_knockback");
         for (Player player : center.getWorld().getNearbyPlayers(center, kb.radius())) {
             final Vector push = player.getLocation().toVector().subtract(center.toVector()).setY(0);
             if (push.lengthSquared() < 0.01) {
@@ -94,6 +97,7 @@ final class Abilities {
         final Location at = pinata.location();
         pinata.entity().setVelocity(new Vector(0, up.force(), 0));
         play(at.getWorld(), at, up.sound());
+        tellNearby(pinata, "pinata_shoot_up");
     }
 
     private void baby(Pinata pinata, ThreadLocalRandom random) {
@@ -101,6 +105,7 @@ final class Abilities {
         final double seconds = between(random, baby.minSeconds(), baby.maxSeconds());
         pinata.makeBaby(pinata.age() + (int) (seconds * 20));
         play(pinata.location().getWorld(), pinata.location(), baby.inSound());
+        tellNearby(pinata, "pinata_baby");
     }
 
     private void speedUp(Pinata pinata, ThreadLocalRandom random) {
@@ -108,6 +113,7 @@ final class Abilities {
         final int ticks = (int) (between(random, speed.minSeconds(), speed.maxSeconds()) * 20);
         final Location center = pinata.location();
         play(center.getWorld(), center, speed.sound());
+        tellNearby(pinata, "pinata_speed_up");
         for (Player player : center.getWorld().getNearbyPlayers(center, speed.radius())) {
             player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, ticks, speed.level() - 1));
             player.addPotionEffect(new PotionEffect(PotionEffectType.DOLPHINS_GRACE, ticks, speed.level() - 1));
@@ -117,6 +123,13 @@ final class Abilities {
     /** Called by the pinata when its baby form runs out. */
     void grewUp(Pinata pinata) {
         play(pinata.location().getWorld(), pinata.location(), settings.baby().outSound());
+        tellNearby(pinata, "pinata_baby_end");
+    }
+
+    /** Tricks are announced to the players who can see them, not the whole server. */
+    private void tellNearby(Pinata pinata, String key) {
+        final Location at = pinata.location();
+        messages.broadcast(at.getWorld().getNearbyPlayers(at, ANNOUNCE_BLOCKS), key);
     }
 
     private static double between(ThreadLocalRandom random, double min, double max) {

@@ -25,9 +25,11 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Loads lang.yml and sends its messages as chat, action bar, title and sound. A message is parsed
@@ -52,26 +54,50 @@ public final class Messages {
 
     public void load() {
         final File file = new File(plugin.getDataFolder(), "lang.yml");
+        final YamlConfiguration bundled = bundled();
+        if (file.exists() && YamlConfiguration.loadConfiguration(file).getInt("lang_version", 0)
+                < bundled.getInt("lang_version", 0)) {
+            final File old = new File(plugin.getDataFolder(), "lang.yml.old");
+            old.delete();
+            if (file.renameTo(old)) {
+                plugin.getLogger().warning("lang.yml was from an older version, so it was saved as lang.yml.old and"
+                        + " replaced. Copy any changes you made across.");
+            }
+        }
         if (!file.exists()) {
             plugin.saveResource("lang.yml", false);
         }
 
         final YamlConfiguration lang = YamlConfiguration.loadConfiguration(file);
-        try (Reader defaults = new InputStreamReader(plugin.getResource("lang.yml"), StandardCharsets.UTF_8)) {
-            lang.setDefaults(YamlConfiguration.loadConfiguration(defaults));
-        } catch (IOException e) {
-            plugin.getLogger().warning("Could not read the bundled lang.yml: " + e.getMessage());
-        }
+        lang.setDefaults(bundled);
 
+        // keys missing from the file on disk fall back to the bundled ones, so messages added in
+        // newer versions still work with an older lang.yml
+        final Set<String> keys = new LinkedHashSet<>(lang.getKeys(false));
+        if (lang.getDefaults() != null) {
+            keys.addAll(lang.getDefaults().getKeys(false));
+        }
         entries.clear();
-        for (String key : lang.getKeys(false)) {
-            final ConfigurationSection section = lang.getConfigurationSection(key);
+        for (String key : keys) {
+            ConfigurationSection section = lang.getConfigurationSection(key);
+            if (section == null && lang.getDefaults() != null) {
+                section = lang.getDefaults().getConfigurationSection(key);
+            }
             if (section != null && !key.equals("states")) {
                 entries.put(key, readEntry(key, section));
             }
         }
         enabledWord = lang.getString("states.enabled", "enabled");
         disabledWord = lang.getString("states.disabled", "disabled");
+    }
+
+    private YamlConfiguration bundled() {
+        try (Reader reader = new InputStreamReader(plugin.getResource("lang.yml"), StandardCharsets.UTF_8)) {
+            return YamlConfiguration.loadConfiguration(reader);
+        } catch (IOException e) {
+            plugin.getLogger().warning("Could not read the bundled lang.yml: " + e.getMessage());
+            return new YamlConfiguration();
+        }
     }
 
     private Entry readEntry(String key, ConfigurationSection section) {
