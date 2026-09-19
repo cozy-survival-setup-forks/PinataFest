@@ -53,6 +53,8 @@ public final class Pinata {
 
     private int health;
     private int age;
+    private boolean nearby = true;
+    private boolean textsDirty = true;
     private int babyEnds = -1;
     private String lastHitter = "";
     private Team glowTeam;
@@ -120,6 +122,7 @@ public final class Pinata {
 
     /** Counts one hit and returns how many are left. */
     int registerHit(String player) {
+        textsDirty = true;
         participants.add(player);
         lastHitter = player;
         return --health;
@@ -142,13 +145,27 @@ public final class Pinata {
         return false;
     }
 
-    /** Called every tick. Cheap work every tick, the rest every few ticks. */
+    /** Whether any player is close enough to see it; the service updates this once a second. */
+    void setNearby(boolean nearby) {
+        this.nearby = nearby;
+    }
+
+    /**
+     * Called every tick. Nothing that only nearby players can see is done when nobody is near, and
+     * the texts are only rebuilt when a hit changed them or the colour flow moves on.
+     */
     void tick(Messages messages) {
         age++;
-        spin();
-        if (age % 5 == 0) {
+        if (nearby) {
+            spin();
+            if (age % 5 == 0) {
+                cycleLook();
+            }
+        }
+        final int rate = settings.look().animationTicks();
+        if (textsDirty || (rate > 0 && age % rate == 0)) {
+            textsDirty = false;
             refreshTexts(messages);
-            cycleLook();
         }
     }
 
@@ -200,7 +217,9 @@ public final class Pinata {
                 Messages.text("hits", health), Messages.text("max", maxHealth),
                 Messages.text("plural", health == 1 ? "" : "S"),
                 Placeholder.parsed("phase", String.format(Locale.ROOT, "%.2f", (age % 100) / 50.0 - 1.0))};
-        llama.customName(messages.chat("pinata_name", resolvers));
+        if (nearby) {
+            llama.customName(messages.chat("pinata_name", resolvers));
+        }
         if (settings.bar().enabled()) {
             bar.name(messages.chat("pinata_bar", resolvers));
             bar.progress(Math.max(0f, Math.min(1f, health / (float) maxHealth)));

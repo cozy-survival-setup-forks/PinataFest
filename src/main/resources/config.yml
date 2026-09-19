@@ -116,6 +116,9 @@ pinata:
       type: firework
       # How many circle around the pinata every tick.
       count: 2
+    # Ticks between name and boss bar updates that make the colours flow. Higher is lighter on
+    # the network, 0 stops the flow. Hits always update them straight away.
+    animation_ticks: 10
 
   # Runs away from the nearest player, or wanders when nobody is close.
   movement:

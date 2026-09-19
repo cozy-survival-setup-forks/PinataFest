@@ -54,6 +54,7 @@ public final class PinataListener implements Listener {
 
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
+        service.visibility().load(event.getPlayer());
         Bukkit.getScheduler().runTask(plugin, service.visibility()::refresh);
     }
 

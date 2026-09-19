@@ -52,7 +52,7 @@ public record Settings(Votes votes, Party party, PinataSettings pinata, Visibili
     }
 
     public record Look(String llamaColor, String carpet, boolean chest, boolean glow, String glowColor,
-                       Particle particle, int particleCount) {
+                       Particle particle, int particleCount, int animationTicks) {
     }
 
     public record Health(int base, int perPlayer, int max) {
@@ -185,7 +185,8 @@ public record Settings(Votes votes, Party party, PinataSettings pinata, Visibili
                     cfg.getBoolean("pinata.look.glow.enabled", true),
                     cfg.getString("pinata.look.glow.color", "cycle"),
                     particle("pinata.look.particles.type", "firework"),
-                    Math.max(0, cfg.getInt("pinata.look.particles.count", 2)));
+                    Math.max(0, cfg.getInt("pinata.look.particles.count", 2)),
+                    Math.max(0, cfg.getInt("pinata.look.animation_ticks", 10)));
             final Health health = new Health(
                     Math.max(1, cfg.getInt("pinata.health.base", 5)),
                     Math.max(0, cfg.getInt("pinata.health.per_player", 1)),

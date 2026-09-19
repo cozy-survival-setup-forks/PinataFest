@@ -42,6 +42,7 @@ import java.util.function.Supplier;
 public final class PinataService {
 
     private static final BossBar.Color[] BAR_COLORS = BossBar.Color.values();
+    private static final double NEARBY_BLOCKS = 64.0;
 
     /** A countdown that ends with pinatas appearing. */
     private static final class Party {
@@ -206,8 +207,12 @@ public final class PinataService {
         if (health.max() > 0) {
             hits = Math.min(hits, health.max());
         }
-        final Llama llama = at.getWorld().spawn(at, Llama.class);
-        final Pinata pinata = new Pinata(llama, config, hits);
+        return track(at.getWorld().spawn(at, Llama.class), hits);
+    }
+
+    /** Starts running a llama as a pinata. Split from spawn so the game rules can be tested. */
+    Pinata track(Llama llama, int hits) {
+        final Pinata pinata = new Pinata(llama, settings.get().pinata(), hits);
         active.put(llama.getUniqueId(), pinata);
         Bukkit.getScheduler().runTask(plugin, visibility::refresh);
         return pinata;
@@ -336,7 +341,7 @@ public final class PinataService {
         tick++;
         final Settings.PinataSettings config = settings.get().pinata();
 
-        for (Pinata pinata : new ArrayList<>(active.values())) {
+        for (Pinata pinata : active.isEmpty() ? List.<Pinata>of() : new ArrayList<>(active.values())) {
             if (!pinata.isAlive()) {
                 hideBar(pinata);
                 pinata.cleanUp();
@@ -359,10 +364,17 @@ public final class PinataService {
 
         if (tick % 20 == 0) {
             syncBars(config);
-            if (!active.isEmpty() || visibility.anyHidden()) {
-                visibility.refresh();
-            }
+            updateNearby();
+            visibility.check();
             checkPartyEnd();
+        }
+    }
+
+    /** Decides once a second which pinatas have someone close enough to see them. */
+    private void updateNearby() {
+        for (Pinata pinata : active.values()) {
+            final Location at = pinata.location();
+            pinata.setNearby(!at.getWorld().getNearbyPlayers(at, NEARBY_BLOCKS).isEmpty());
         }
     }
 
@@ -381,7 +393,7 @@ public final class PinataService {
         Vector direction = null;
         Player nearest = null;
         double best = movement.fleeRadius() * movement.fleeRadius();
-        for (Player player : from.getWorld().getPlayers()) {
+        for (Player player : from.getWorld().getNearbyPlayers(from, movement.fleeRadius())) {
             final double distance = player.getLocation().distanceSquared(from);
             if (distance < best) {
                 best = distance;
