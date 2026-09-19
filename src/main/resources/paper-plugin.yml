@@ -1,0 +1,26 @@
+name: PinataFest
+version: '${version}'
+main: dev.pinatafest.PinataFestPlugin
+api-version: '1.21'
+description: Vote rewards for Votifier, with offline queueing and vote milestones.
+authors:
+  - Cozy Survival
+
+dependencies:
+  server:
+    Votifier:
+      load: BEFORE
+      required: false
+      join-classpath: true
+    NuVotifier:
+      load: BEFORE
+      required: false
+      join-classpath: true
+    VotifierPlus:
+      load: BEFORE
+      required: false
+      join-classpath: true
+    PlaceholderAPI:
+      load: BEFORE
+      required: false
+      join-classpath: true

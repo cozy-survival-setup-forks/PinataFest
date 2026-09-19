@@ -1,0 +1,64 @@
+# PinataFest - lang.yml
+# Every message can be sent as chat, action bar or both, with an optional sound.
+# Text supports MiniMessage as well as &a and &#RRGGBB codes.
+
+vote_header:
+  enabled: true
+  type: [chat]
+  chat: "<bold><#8BF0A6>PINATAFEST</#8BF0A6></bold> <#A7B6C4>⏵</#A7B6C4> <white>Vote for the server and get <#FFD166>rewards</#FFD166>:"
+
+vote_link:
+  # Placeholders: <name>, <url>
+  enabled: true
+  type: [chat]
+  chat: "<#A7B6C4>•</#A7B6C4> <click:open_url:'<url>'><hover:show_text:'<white>Click to open'><#66D9E8><name></#66D9E8></hover></click>"
+
+vote_none:
+  enabled: true
+  type: [chat]
+  chat: "<bold><#8BF0A6>PINATAFEST</#8BF0A6></bold> <#A7B6C4>⏵</#A7B6C4> <white>There are no vote links set up yet."
+
+reminder:
+  enabled: true
+  type: [chat]
+  chat: "<bold><#8BF0A6>PINATAFEST</#8BF0A6></bold> <#A7B6C4>⏵</#A7B6C4> <white>You have not voted today. Use <#FFD166>/vote</#FFD166> for rewards!"
+  sound:
+    enabled: true
+    key: "minecraft:entity.player.levelup"
+    source: MASTER
+    volume: 1.15
+    pitch: 1.35
+
+votes_self:
+  # Placeholders: <votes>, <queued>
+  enabled: true
+  type: [chat]
+  chat: "<bold><#8BF0A6>PINATAFEST</#8BF0A6></bold> <#A7B6C4>⏵</#A7B6C4> <white>You have voted <#FFD166><votes></#FFD166> times, with <#66D9E8><queued></#66D9E8> waiting to be paid out."
+
+votes_other:
+  # Placeholders: <player>, <votes>, <queued>
+  enabled: true
+  type: [chat]
+  chat: "<bold><#8BF0A6>PINATAFEST</#8BF0A6></bold> <#A7B6C4>⏵</#A7B6C4> <#66D9E8><player></#66D9E8> <white>has voted <#FFD166><votes></#FFD166> times, with <#66D9E8><queued></#66D9E8> waiting to be paid out."
+
+queued_paid:
+  # Shown on login. Placeholders: <count>
+  enabled: true
+  type: [chat]
+  chat: "<bold><#8BF0A6>PINATAFEST</#8BF0A6></bold> <#A7B6C4>⏵</#A7B6C4> <white>Thanks for voting while you were away! Paying out <#FFD166><count></#FFD166> votes."
+
+fake_sent:
+  # Placeholders: <player>, <service>
+  enabled: true
+  type: [chat]
+  chat: "<bold><#8BF0A6>PINATAFEST</#8BF0A6></bold> <#A7B6C4>⏵</#A7B6C4> <white>Sent a test vote for <#66D9E8><player></#66D9E8> on <#FFD166><service></#FFD166>."
+
+reload:
+  enabled: true
+  type: [chat]
+  chat: "<bold><#8BF0A6>PINATAFEST</#8BF0A6></bold> <#A7B6C4>⏵</#A7B6C4> <white>Config and messages <#8BF0A6>reloaded</#8BF0A6>."
+
+votes_none_console:
+  enabled: true
+  type: [chat]
+  chat: "<bold><#8BF0A6>PINATAFEST</#8BF0A6></bold> <#A7B6C4>⏵</#A7B6C4> <white>Use <#FFD166>/pinatafest votes NAME</#FFD166> from the console."

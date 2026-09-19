@@ -1,0 +1,86 @@
+# PinataFest - config.yml
+# Rewards for votes that arrive through Votifier, NuVotifier or VotifierPlus.
+# Durations look like 30s, 10m, 3h. Reload with /pinatafest reload.
+#
+# In every command list %player% is the voter, %service% the site they voted on and
+# %votes% their total number of votes after this one.
+
+votes:
+  # Turn this off if another plugin already handles votes.
+  listen: true
+
+  offline:
+    # Votes for players who are offline are kept and paid out when they next log in.
+    # With this off, offline votes are ignored.
+    enabled: true
+    # The most votes kept per player. 0 means no limit.
+    max_queue: 0
+
+  # Played to the player when they vote. Set particle type to none to skip it.
+  effects:
+    particle:
+      type: happy_villager
+      count: 50
+      spread: [0.5, 0.9, 0.5]
+      speed: 0.05
+    sound:
+      enabled: true
+      key: "minecraft:entity.player.levelup"
+      volume: 1.0
+      pitch: 1.25
+
+  # Shown by /vote. url is opened when the name is clicked.
+  links:
+    - name: "Vote site 1"
+      url: "https://example.com/vote"
+
+reminder:
+  enabled: true
+  # How often reminders go out.
+  every: 3h
+  # Only players who have not voted for this long are reminded.
+  after: 24h
+
+rewards:
+  # Every vote. Each entry rolls on its own, from top to bottom.
+  vote:
+    thanks:
+      chance: 100
+      # Skip this entry for vanished players.
+      ignore_vanished: true
+      # Skip this entry when the vote was cast while the player was offline.
+      ignore_offline: true
+      commands:
+        - "say %player% has voted for the server!"
+    iron:
+      chance: 75
+      commands:
+        - "minecraft:give %player% minecraft:iron_ingot 1"
+    diamond:
+      chance: 37.5
+      commands:
+        - "minecraft:give %player% minecraft:diamond 1"
+    lucky:
+      chance: 12.5
+      # Pick one of the commands at random instead of running all of them.
+      random_line: true
+      # Stop rolling the entries below this one if this one was won.
+      stop: true
+      commands:
+        - "minecraft:give %player% minecraft:emerald 2"
+        - "minecraft:give %player% minecraft:golden_apple 1"
+
+  # Extra rewards for reaching a number of votes.
+  milestones:
+    ten:
+      # total: once, at exactly this many votes. every: each time the total is a multiple of it.
+      type: total
+      votes: 10
+      commands:
+        - "say %player% has voted %votes% times!"
+        - "minecraft:give %player% minecraft:diamond 8"
+    fourth:
+      type: every
+      votes: 4
+      commands:
+        - "minecraft:give %player% minecraft:emerald 2"
