@@ -9,12 +9,12 @@ import java.util.function.Predicate;
 import java.util.random.RandomGenerator;
 
 /**
- * Works out which commands a vote earns. It only builds the list, running the commands is left to
- * the caller, which keeps the rolling easy to test.
+ * Works out which commands a reward list earns. It only builds the list, running the commands is
+ * left to the caller, which keeps the rolling easy to test.
  */
 public final class Rewards {
 
-    /** Who voted and what is known about them right now. */
+    /** Who is being rewarded and what is known about them right now. */
     public record Voter(String name, String service, int totalVotes, boolean vanished, boolean votedOffline,
                         Predicate<String> hasPermission) {
     }
@@ -22,18 +22,14 @@ public final class Rewards {
     private Rewards() {
     }
 
-    /** Commands from the per-vote rewards, rolled in config order. */
-    public static List<String> forVote(List<Settings.Reward> rewards, Voter voter, RandomGenerator random) {
+    /** Commands for one player, rolled in config order. Entries marked once are left out. */
+    public static List<String> forPlayer(List<Settings.Reward> rewards, Voter voter, RandomGenerator random) {
         final List<String> commands = new ArrayList<>();
         for (Settings.Reward reward : rewards) {
-            if (!eligible(reward, voter) || random.nextDouble() * 100.0 >= reward.chance()) {
+            if (reward.once() || !eligible(reward, voter) || !rolled(reward, random)) {
                 continue;
             }
-            if (reward.randomLine()) {
-                commands.add(fill(reward.commands().get(random.nextInt(reward.commands().size())), voter));
-            } else {
-                reward.commands().forEach(command -> commands.add(fill(command, voter)));
-            }
+            addCommands(commands, reward, voter, random);
             if (reward.stop()) {
                 break;
             }
@@ -41,18 +37,32 @@ public final class Rewards {
         return commands;
     }
 
-    /** Commands from the milestones the new vote total has just reached. */
-    public static List<String> forMilestones(List<Settings.Milestone> milestones, Voter voter) {
+    /** Commands from entries marked once, which run one time for everybody and never mention a player. */
+    public static List<String> once(List<Settings.Reward> rewards, RandomGenerator random) {
+        final Voter nobody = new Voter("", "", 0, false, false, permission -> true);
         final List<String> commands = new ArrayList<>();
-        for (Settings.Milestone milestone : milestones) {
-            final boolean reached = milestone.type() == Settings.MilestoneType.TOTAL
-                    ? voter.totalVotes() == milestone.votes()
-                    : voter.totalVotes() % milestone.votes() == 0;
-            if (reached && permitted(milestone.permission(), voter)) {
-                milestone.commands().forEach(command -> commands.add(fill(command, voter)));
+        for (Settings.Reward reward : rewards) {
+            if (!reward.once() || !rolled(reward, random)) {
+                continue;
+            }
+            addCommands(commands, reward, nobody, random);
+            if (reward.stop()) {
+                break;
             }
         }
         return commands;
+    }
+
+    private static boolean rolled(Settings.Reward reward, RandomGenerator random) {
+        return random.nextDouble() * 100.0 < reward.chance();
+    }
+
+    private static void addCommands(List<String> out, Settings.Reward reward, Voter voter, RandomGenerator random) {
+        if (reward.randomLine()) {
+            out.add(fill(reward.commands().get(random.nextInt(reward.commands().size())), voter));
+        } else {
+            reward.commands().forEach(command -> out.add(fill(command, voter)));
+        }
     }
 
     private static boolean eligible(Settings.Reward reward, Voter voter) {
@@ -65,10 +75,7 @@ public final class Rewards {
         if (!reward.services().isEmpty() && !reward.services().contains(voter.service().toLowerCase(Locale.ROOT))) {
             return false;
         }
-        return permitted(reward.permission(), voter);
-    }
-
-    private static boolean permitted(String permission, Voter voter) {
+        final String permission = reward.permission();
         return permission == null || permission.isBlank() || voter.hasPermission().test(permission);
     }
 

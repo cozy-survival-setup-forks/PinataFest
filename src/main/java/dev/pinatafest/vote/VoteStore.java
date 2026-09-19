@@ -16,9 +16,9 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 /**
- * Vote totals, last vote times and the queue of votes waiting for offline players. Votes only
- * carry a name, so everything is kept by lower-case name. Reads and writes happen on the main
- * thread; only the file write itself is done elsewhere.
+ * Vote totals, last vote times, the queue of rewards waiting for offline players and the number
+ * of votes counted towards the next pinata. Votes only carry a name, so players are kept by
+ * lower-case name. Reads and writes happen on the main thread; only the file write is done elsewhere.
  */
 public final class VoteStore {
 
@@ -42,17 +42,15 @@ public final class VoteStore {
             return queue;
         }
 
-        public void addVote() {
+        public void addVote(long time) {
             total++;
-        }
-
-        public void setLastVote(long time) {
             lastVote = time;
         }
     }
 
     private final Path file;
     private final Map<String, Entry> players = new HashMap<>();
+    private int pinataVotes;
     private boolean dirty;
 
     public VoteStore(Path file) {
@@ -64,6 +62,7 @@ public final class VoteStore {
             return;
         }
         final YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file.toFile());
+        pinataVotes = Math.max(0, yaml.getInt("pinata_votes"));
         final ConfigurationSection section = yaml.getConfigurationSection("players");
         if (section == null) {
             return;
@@ -99,6 +98,16 @@ public final class VoteStore {
         return players.get(key(name));
     }
 
+    /** Votes counted towards the next pinata, whether or not the voter was online. */
+    public int pinataVotes() {
+        return pinataVotes;
+    }
+
+    public void setPinataVotes(int votes) {
+        pinataVotes = Math.max(0, votes);
+        dirty = true;
+    }
+
     public void markDirty() {
         dirty = true;
     }
@@ -110,6 +119,7 @@ public final class VoteStore {
     /** The current contents as YAML, and marks them as saved. Call on the main thread. */
     public String snapshot() {
         final YamlConfiguration yaml = new YamlConfiguration();
+        yaml.set("pinata_votes", pinataVotes);
         players.forEach((name, entry) -> {
             final String base = "players." + name + ".";
             yaml.set(base + "total", entry.total);

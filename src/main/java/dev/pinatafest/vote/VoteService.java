@@ -2,6 +2,7 @@ package dev.pinatafest.vote;
 
 import dev.pinatafest.config.Settings;
 import dev.pinatafest.message.Messages;
+import dev.pinatafest.pinata.PinataService;
 import dev.pinatafest.reward.Rewards;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -15,8 +16,8 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Supplier;
 
 /**
- * Turns a received vote into rewards, either straight away or, for players who are offline,
- * when they next log in.
+ * Turns a received vote into a count towards the next pinata and rewards for the voter, either
+ * straight away or, for a player who is offline, when they next log in.
  */
 public final class VoteService {
 
@@ -24,12 +25,15 @@ public final class VoteService {
     private final Supplier<Settings> settings;
     private final VoteStore store;
     private final Messages messages;
+    private final PinataService pinatas;
 
-    public VoteService(Plugin plugin, Supplier<Settings> settings, VoteStore store, Messages messages) {
+    public VoteService(Plugin plugin, Supplier<Settings> settings, VoteStore store, Messages messages,
+                       PinataService pinatas) {
         this.plugin = plugin;
         this.settings = settings;
         this.store = store;
         this.messages = messages;
+        this.pinatas = pinatas;
     }
 
     /** Entry point for a vote from any thread. */
@@ -47,25 +51,24 @@ public final class VoteService {
             return;
         }
 
+        // the vote counts for the player and for the pinata whether or not they are online
         final Player player = Bukkit.getPlayerExact(username);
+        final String name = player != null ? player.getName() : username;
+        store.entry(name).addVote(System.currentTimeMillis());
+        pinatas.countVote(name);
+
         if (player != null) {
-            store.entry(player.getName()).setLastVote(System.currentTimeMillis());
             grant(player, service, false);
             playEffects(player);
-            return;
-        }
-
-        if (!votes.offlineEnabled()) {
-            return;
-        }
-        final VoteStore.Entry entry = store.entry(username);
-        entry.setLastVote(System.currentTimeMillis());
-        if (votes.maxQueue() == 0 || entry.queue().size() < votes.maxQueue()) {
-            entry.queue().add(new VoteStore.Queued(service, System.currentTimeMillis()));
+        } else if (votes.queueRewards()) {
+            final VoteStore.Entry entry = store.entry(name);
+            if (votes.maxQueue() == 0 || entry.queue().size() < votes.maxQueue()) {
+                entry.queue().add(new VoteStore.Queued(service, System.currentTimeMillis()));
+            }
         }
     }
 
-    /** Pays out anything that was waiting for this player. */
+    /** Pays out the rewards of votes cast while this player was away. */
     public void payQueued(Player player) {
         final VoteStore.Entry entry = store.find(player.getName());
         if (entry == null || entry.queue().isEmpty()) {
@@ -81,18 +84,12 @@ public final class VoteService {
         playEffects(player);
     }
 
-    /** Counts the vote and runs everything it earned. */
     private void grant(Player player, String service, boolean votedOffline) {
-        final Settings config = settings.get();
         final VoteStore.Entry entry = store.entry(player.getName());
-        entry.addVote();
-
         final Rewards.Voter voter = new Rewards.Voter(player.getName(), service, entry.total(),
                 isVanished(player), votedOffline, player::hasPermission);
-        final List<String> commands = new ArrayList<>(
-                Rewards.forVote(config.rewards(), voter, ThreadLocalRandom.current()));
-        commands.addAll(Rewards.forMilestones(config.milestones(), voter));
-        commands.forEach(command -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command));
+        Rewards.forPlayer(settings.get().rewards().vote(), voter, ThreadLocalRandom.current())
+                .forEach(command -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command));
     }
 
     private void playEffects(Player player) {

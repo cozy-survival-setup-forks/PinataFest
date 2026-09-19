@@ -2,7 +2,7 @@ name: PinataFest
 version: '${version}'
 main: dev.pinatafest.PinataFestPlugin
 api-version: '1.21'
-description: Vote rewards for Votifier, with offline queueing and vote milestones.
+description: Vote rewards and pinata parties for Votifier servers.
 authors:
   - Cozy Survival
 

@@ -1,64 +1,206 @@
 # PinataFest - lang.yml
-# Every message can be sent as chat, action bar or both, with an optional sound.
+# Every message can be sent as chat, action bar, title or any mix, with an optional sound.
 # Text supports MiniMessage as well as &a and &#RRGGBB codes.
+# The PINATA prefix is written out in every message so each one can be changed on its own.
 
-vote_header:
+# ---- vote goal ----
+
+vote_progress:
+  # Placeholders: <player>, <count>, <needed>
   enabled: true
   type: [chat]
-  chat: "<bold><#8BF0A6>PINATAFEST</#8BF0A6></bold> <#A7B6C4>⏵</#A7B6C4> <white>Vote for the server and get <#FFD166>rewards</#FFD166>:"
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <#52D3FF><player> <white>voted! <#FFD068><count>/<needed> <white>votes until the next pinata."
 
-vote_link:
-  # Placeholders: <name>, <url>
+vote_goal:
+  # Placeholders: <player>
   enabled: true
   type: [chat]
-  chat: "<#A7B6C4>•</#A7B6C4> <click:open_url:'<url>'><hover:show_text:'<white>Click to open'><#66D9E8><name></#66D9E8></hover></click>"
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <#52D3FF><player> <white>cast the vote that <#66FF83>starts the party<white>!"
 
-vote_none:
+party_start:
+  # Placeholders: <seconds>
   enabled: true
   type: [chat]
-  chat: "<bold><#8BF0A6>PINATAFEST</#8BF0A6></bold> <#A7B6C4>⏵</#A7B6C4> <white>There are no vote links set up yet."
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>A pinata party starts in <#FFD068><seconds> seconds<white>!"
 
-reminder:
+countdown_bar:
+  # Shown on the boss bar. Placeholders: <seconds>
   enabled: true
   type: [chat]
-  chat: "<bold><#8BF0A6>PINATAFEST</#8BF0A6></bold> <#A7B6C4>⏵</#A7B6C4> <white>You have not voted today. Use <#FFD166>/vote</#FFD166> for rewards!"
+  chat: "<gradient:#FF5484:#FFD068:#B3E876:#66FF83:#52D3FF:#B87CFF><bold><seconds> SECONDS TILL PINATAFEST"
+
+# ---- the pinata ----
+
+pinata_name:
+  # The name over the pinata's head and on its boss bar. Placeholders: <hits>, <max>, <plural>, <phase>
+  # <phase> moves the gradient along, so the colours flow.
+  enabled: true
+  type: [chat]
+  chat: "<gradient:#FF5484:#FFD068:#B3E876:#66FF83:#52D3FF:#B87CFF:<phase>><bold>PINATA!"
+
+pinata_bar:
+  enabled: true
+  type: [chat]
+  chat: "<gradient:#FF5484:#FFD068:#B3E876:#66FF83:#52D3FF:#B87CFF:<phase>><bold>PINATA: <hits> HIT<plural> LEFT"
+
+pinata_spawn:
+  # Placeholders: <x>, <y>, <z>, <world>
+  enabled: true
+  type: [chat]
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>A pinata just appeared at <#FFD068><x>, <y>, <z> <white>in <#52D3FF><world><white>!"
   sound:
-    enabled: true
+    key: "minecraft:entity.firework_rocket.launch"
+    volume: 1.0
+    pitch: 1.0
+
+pinata_die:
+  # Placeholders: <player> is who landed the last hit.
+  enabled: true
+  type: [chat]
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>The pinata was <#66FF83>destroyed <white>by <#52D3FF><player><white>!"
+  sound:
     key: "minecraft:entity.player.levelup"
-    source: MASTER
-    volume: 1.15
-    pitch: 1.35
+    volume: 1.0
+    pitch: 1.0
 
-votes_self:
-  # Placeholders: <votes>, <queued>
+pinata_expire:
   enabled: true
   type: [chat]
-  chat: "<bold><#8BF0A6>PINATAFEST</#8BF0A6></bold> <#A7B6C4>⏵</#A7B6C4> <white>You have voted <#FFD166><votes></#FFD166> times, with <#66D9E8><queued></#66D9E8> waiting to be paid out."
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>The pinata got away <#FF5484>before anyone broke it<white>."
 
-votes_other:
-  # Placeholders: <player>, <votes>, <queued>
+pinata_teleport:
+  # Placeholders: <x>, <y>, <z>
   enabled: true
-  type: [chat]
-  chat: "<bold><#8BF0A6>PINATAFEST</#8BF0A6></bold> <#A7B6C4>⏵</#A7B6C4> <#66D9E8><player></#66D9E8> <white>has voted <#FFD166><votes></#FFD166> times, with <#66D9E8><queued></#66D9E8> waiting to be paid out."
+  type: [actionbar]
+  actionbar: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>The pinata teleported to <#FFD068><x>, <y>, <z><white>!"
+
+party_over:
+  # A title for players when the last pinata is gone.
+  enabled: true
+  type: [title]
+  title: "<#FF5484><bold>PINATA DESTROYED"
+  subtitle: "<white>Thanks for the <#FFD068>lovely votes"
+  times: [10, 50, 10]
+
+# ---- hitting ----
+
+hit_left:
+  # Placeholders: <hits>, <plural>
+  enabled: true
+  type: [actionbar]
+  actionbar: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <#FFD068><hits> <white>hit<plural> left!"
+
+hit_no_permission:
+  enabled: true
+  type: [actionbar]
+  actionbar: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <#FF5484>You cannot hit this pinata."
+
+hit_wrong_item:
+  enabled: true
+  type: [actionbar]
+  actionbar: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <#FF5484>That is not the right item to hit it with."
+
+hit_need_vote:
+  enabled: true
+  type: [actionbar]
+  actionbar: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <#FF5484>Vote first, then you can hit the pinata!"
+
+# ---- votes ----
 
 queued_paid:
   # Shown on login. Placeholders: <count>
   enabled: true
   type: [chat]
-  chat: "<bold><#8BF0A6>PINATAFEST</#8BF0A6></bold> <#A7B6C4>⏵</#A7B6C4> <white>Thanks for voting while you were away! Paying out <#FFD166><count></#FFD166> votes."
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>Thanks for voting while you were away! Paying out <#FFD068><count> <white>votes."
+
+votes_self:
+  # Placeholders: <votes>, <queued>
+  enabled: true
+  type: [chat]
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>You have voted <#FFD068><votes> <white>times, with <#52D3FF><queued> <white>waiting to be paid out."
+
+votes_other:
+  # Placeholders: <player>, <votes>, <queued>
+  enabled: true
+  type: [chat]
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <#52D3FF><player> <white>has voted <#FFD068><votes> <white>times, with <#52D3FF><queued> <white>waiting to be paid out."
+
+votes_console:
+  enabled: true
+  type: [chat]
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>Use <#FFD068>/pinatafest votes NAME <white>from the console."
+
+progress:
+  # Placeholders: <count>, <needed>, <left>
+  enabled: true
+  type: [chat]
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <#FFD068><count>/<needed> <white>votes so far, <#66FF83><left> <white>to go until the next pinata."
+
+progress_off:
+  enabled: true
+  type: [chat]
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>Votes do not start pinatas on this server."
+
+# ---- visibility ----
+
+visibility_hidden:
+  enabled: true
+  type: [chat]
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>Other players are now <#FF4361>Hidden<white> during Pinata Parties."
+  sound:
+    key: "minecraft:ui.button.click"
+    pitch: 0.8
+
+visibility_shown:
+  enabled: true
+  type: [chat]
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>Other players are now <#B0FF83>Visible<white> during Pinata Parties."
+  sound:
+    key: "minecraft:ui.button.click"
+    pitch: 1.2
+
+visibility_status_hidden:
+  enabled: true
+  type: [chat]
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>Other players are currently <#FF4361>Hidden<white> during Pinata Parties."
+
+visibility_status_shown:
+  enabled: true
+  type: [chat]
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>Other players are currently <#B0FF83>Visible<white> during Pinata Parties."
+
+# ---- admin ----
 
 fake_sent:
   # Placeholders: <player>, <service>
   enabled: true
   type: [chat]
-  chat: "<bold><#8BF0A6>PINATAFEST</#8BF0A6></bold> <#A7B6C4>⏵</#A7B6C4> <white>Sent a test vote for <#66D9E8><player></#66D9E8> on <#FFD166><service></#FFD166>."
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>Sent a test vote for <#52D3FF><player> <white>on <#FFD068><service><white>."
+
+summon_ok:
+  # Placeholders: <location>
+  enabled: true
+  type: [chat]
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>Starting a pinata at <#FFD068><location><white>."
+
+summon_bad:
+  # Placeholders: <location>
+  enabled: true
+  type: [chat]
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <#FF5484>No usable location called <location><white>. Check pinata.locations in config.yml."
+
+killed:
+  # Placeholders: <count>
+  enabled: true
+  type: [chat]
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>Removed <#FFD068><count> <white>pinatas."
 
 reload:
   enabled: true
   type: [chat]
-  chat: "<bold><#8BF0A6>PINATAFEST</#8BF0A6></bold> <#A7B6C4>⏵</#A7B6C4> <white>Config and messages <#8BF0A6>reloaded</#8BF0A6>."
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>Config and messages <#66FF83>reloaded<white>."
 
-votes_none_console:
+players_only:
   enabled: true
   type: [chat]
-  chat: "<bold><#8BF0A6>PINATAFEST</#8BF0A6></bold> <#A7B6C4>⏵</#A7B6C4> <white>Use <#FFD166>/pinatafest votes NAME</#FFD166> from the console."
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>This command is <#FF5484>for players <white>only."

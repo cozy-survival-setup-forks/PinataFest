@@ -5,6 +5,7 @@ import com.vexsoftware.votifier.model.VotifierEvent;
 import dev.pinatafest.config.Settings;
 import dev.pinatafest.hook.VotifierHook;
 import dev.pinatafest.message.Messages;
+import dev.pinatafest.pinata.PinataService;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockbukkit.mockbukkit.MockBukkit;
 import org.mockbukkit.mockbukkit.ServerMock;
 
+import java.io.StringReader;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,8 +33,18 @@ class VoteServiceTest {
             votes:
               listen: true
               offline:
-                enabled: true
+                queue_rewards: true
                 max_queue: 2
+            pinata:
+              locations:
+                spawn:
+                  world: world
+                  x: 0
+                  y: 80
+                  z: 0
+              auto_summon:
+                votes_needed: 3
+                locations: [spawn]
             rewards:
               vote:
                 always:
@@ -44,12 +56,6 @@ class VoteServiceTest {
                   ignore_offline: true
                   commands:
                     - "live %player%"
-              milestones:
-                second:
-                  type: total
-                  votes: 2
-                  commands:
-                    - "milestone %player%"
             """;
 
     private ServerMock server;
@@ -59,15 +65,18 @@ class VoteServiceTest {
     private final List<String> ran = new ArrayList<>();
 
     @BeforeEach
-    void setUp(@TempDir Path dir) throws Exception {
+    void setUp(@TempDir Path dir) {
         server = MockBukkit.mock();
+        server.addSimpleWorld("world");
         plugin = MockBukkit.createMockPlugin();
         store = new VoteStore(dir.resolve("votes.yml"));
-        final Settings settings = Settings.load(YamlConfiguration.loadConfiguration(new java.io.StringReader(CONFIG)),
+        final Settings settings = Settings.load(YamlConfiguration.loadConfiguration(new StringReader(CONFIG)),
                 Logger.getAnonymousLogger());
-        service = new VoteService(plugin, () -> settings, store, new Messages(plugin));
+        final Messages messages = new Messages(plugin);
+        final PinataService pinatas = new PinataService(plugin, () -> settings, messages, store);
+        service = new VoteService(plugin, () -> settings, store, messages, pinatas);
 
-        for (String name : List.of("record", "live", "milestone")) {
+        for (String name : List.of("record", "live")) {
             server.getCommandMap().register("test", new Command(name) {
                 @Override
                 public boolean execute(@NotNull CommandSender sender, @NotNull String label, String @NotNull [] args) {
@@ -93,18 +102,13 @@ class VoteServiceTest {
     }
 
     @Test
-    void milestoneRunsWhenTheTotalIsReached() {
-        server.addPlayer("Steve");
-        service.receive("Steve", "SiteA");
-        service.receive("Steve", "SiteA");
-
-        assertTrue(ran.contains("milestone Steve"));
-    }
-
-    @Test
-    void offlineVoteWaitsAndIsPaidOnLogin() {
+    void offlineVoteCountsRightAwayButPaysOnLogin() {
         service.receive("Alex", "SiteB");
+
+        // nothing is paid yet, but the vote already counts for the player and for the pinata
         assertTrue(ran.isEmpty());
+        assertEquals(1, store.find("Alex").total());
+        assertEquals(1, store.pinataVotes());
         assertEquals(1, store.find("Alex").queue().size());
 
         final var alex = server.addPlayer("Alex");
@@ -113,32 +117,44 @@ class VoteServiceTest {
         // the live_only entry is skipped because the vote came in while Alex was away
         assertEquals(List.of("record Alex SiteB 1"), ran);
         assertTrue(store.find("Alex").queue().isEmpty());
+        assertEquals(1, store.find("Alex").total());
     }
 
     @Test
-    void queueStopsAtTheLimit() {
+    void queueStopsAtTheLimitButVotesKeepCounting() {
         service.receive("Alex", "A");
         service.receive("Alex", "B");
-        service.receive("Alex", "C");
 
         assertEquals(2, store.find("Alex").queue().size());
+        assertEquals(2, store.find("Alex").total());
+    }
+
+    @Test
+    void reachingTheGoalRestartsTheCounter() {
+        service.receive("Alex", "A");
+        service.receive("Steve", "A");
+        assertEquals(2, store.pinataVotes());
+
+        service.receive("Alex", "B");
+        assertEquals(0, store.pinataVotes());
     }
 
     @Test
     void storeSurvivesARestart(@TempDir Path dir) throws Exception {
         final VoteStore first = new VoteStore(dir.resolve("data.yml"));
         final VoteStore.Entry entry = first.entry("Steve");
-        entry.addVote();
-        entry.addVote();
-        entry.setLastVote(1234L);
+        entry.addVote(1234L);
+        entry.addVote(1235L);
         entry.queue().add(new VoteStore.Queued("SiteA", 99L));
+        first.setPinataVotes(7);
         first.write(first.snapshot());
 
         final VoteStore second = new VoteStore(dir.resolve("data.yml"));
         second.load(Logger.getAnonymousLogger());
         assertEquals(2, second.find("steve").total());
-        assertEquals(1234L, second.find("steve").lastVote());
+        assertEquals(1235L, second.find("steve").lastVote());
         assertEquals("SiteA", second.find("steve").queue().get(0).service());
+        assertEquals(7, second.pinataVotes());
     }
 
     @Test
