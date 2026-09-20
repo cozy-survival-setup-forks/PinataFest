@@ -36,12 +36,31 @@ public final class VoteService {
         this.pinatas = pinatas;
     }
 
+    /** What a player name can look like: Java names, and Bedrock names with a prefix such as a dot. */
+    private static final java.util.regex.Pattern NAME = java.util.regex.Pattern.compile("[A-Za-z0-9_.*-]{1,32}");
+
+    /** Service names end up in reward commands, so only plain characters are kept. */
+    static String cleanService(String service) {
+        final String kept = service == null ? "" : service.replaceAll("[^A-Za-z0-9_.-]", "");
+        return kept.isEmpty() ? "unknown" : kept.substring(0, Math.min(64, kept.length()));
+    }
+
+    /** True if a vote's username can safely be stored and shown. Anything else is dropped. */
+    static boolean validName(String username) {
+        return username != null && NAME.matcher(username).matches();
+    }
+
     /** Entry point for a vote from any thread. */
     public void receive(String username, String service) {
+        if (!validName(username)) {
+            plugin.getLogger().warning("Ignored a vote with an invalid username.");
+            return;
+        }
+        final String cleaned = cleanService(service);
         if (Bukkit.isPrimaryThread()) {
-            handle(username, service);
+            handle(username, cleaned);
         } else {
-            Bukkit.getScheduler().runTask(plugin, () -> handle(username, service));
+            Bukkit.getScheduler().runTask(plugin, () -> handle(username, cleaned));
         }
     }
 
