@@ -11,8 +11,11 @@ import org.bukkit.metadata.MetadataValue;
 import org.bukkit.plugin.Plugin;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 /**
@@ -26,6 +29,10 @@ public final class VoteService {
     private final VoteStore store;
     private final Messages messages;
     private final PinataService pinatas;
+
+    /** Votes waiting to be announced, by player, while more from the same player may still arrive. */
+    private final Map<String, Integer> pending = new HashMap<>();
+    private BiConsumer<String, Integer> announcer = this::broadcastVote;
 
     public VoteService(Plugin plugin, Supplier<Settings> settings, VoteStore store, Messages messages,
                        PinataService pinatas) {
@@ -75,6 +82,7 @@ public final class VoteService {
         final String name = player != null ? player.getName() : username;
         store.entry(name).addVote(System.currentTimeMillis());
         pinatas.countVote(name);
+        announce(name, votes.announceWindowTicks());
 
         if (player != null) {
             grant(player, service, false);
@@ -85,6 +93,35 @@ public final class VoteService {
                 entry.queue().add(new VoteStore.Queued(service, System.currentTimeMillis()));
             }
         }
+    }
+
+    /** Tells everyone about a vote, joining the votes that follow within the window into one message. */
+    private void announce(String name, int windowTicks) {
+        if (windowTicks <= 0) {
+            announcer.accept(name, 1);
+            return;
+        }
+        if (pending.merge(name, 1, Integer::sum) == 1) {
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                final Integer count = pending.remove(name);
+                if (count != null) {
+                    announcer.accept(name, count);
+                }
+            }, windowTicks);
+        }
+    }
+
+    private void broadcastVote(String name, int count) {
+        if (count == 1) {
+            messages.broadcast("vote_broadcast", Messages.text("player", name));
+        } else {
+            messages.broadcast("vote_broadcast_multiple", Messages.text("player", name), Messages.text("count", count));
+        }
+    }
+
+    /** For tests: replaces what is done with an announcement. */
+    void announcer(BiConsumer<String, Integer> announcer) {
+        this.announcer = announcer;
     }
 
     /** Pays out the rewards of votes cast while this player was away. */

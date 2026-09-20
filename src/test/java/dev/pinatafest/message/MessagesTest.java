@@ -52,6 +52,23 @@ class MessagesTest {
     }
 
     @Test
+    void voteMessagesNameThePlayerAndAnyCount() {
+        final Messages messages = new Messages(plugin);
+        messages.load();
+        final Player player = Mockito.mock(Player.class);
+        final ArgumentCaptor<net.kyori.adventure.text.Component> chat =
+                ArgumentCaptor.forClass(net.kyori.adventure.text.Component.class);
+
+        messages.broadcast(List.of(player), "vote_broadcast", Messages.text("player", "Steve"));
+        messages.broadcast(List.of(player), "vote_broadcast_multiple", Messages.text("player", "Steve"),
+                Messages.text("count", 3));
+
+        Mockito.verify(player, Mockito.times(2)).sendMessage(chat.capture());
+        assertEquals("VOTING ▶ Steve has voted for the server [/vote]", plain(chat.getAllValues().get(0)));
+        assertEquals("VOTING ▶ Steve has voted 3 times for the server [/vote]", plain(chat.getAllValues().get(1)));
+    }
+
+    @Test
     void theEndOfTheParty_showsTheDestroyedTitle() {
         final Messages messages = new Messages(plugin);
         messages.load();

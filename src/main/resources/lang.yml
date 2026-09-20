@@ -5,7 +5,21 @@
 #
 # When a new version changes the default messages, this number goes up. An older file is then
 # saved as lang.yml.old and replaced, so new messages and titles are not hidden by stale text.
-lang_version: 2
+lang_version: 3
+
+# ---- votes ----
+
+vote_broadcast:
+  # Told to everyone when a player votes. Placeholders: <player>
+  enabled: true
+  type: [chat]
+  chat: "<#95FF7E><bold>VOTING</bold> <#B6C1C8>▶ <#95FF7E><player> <white>has voted for the server <#B6C1C8><click:run_command:'/vote'><hover:show_text:'<#95FF7E>Click to vote'>[/vote]</hover></click>"
+
+vote_broadcast_multiple:
+  # Used instead when a player's votes arrive together (see votes.announce_window_ticks). Placeholders: <player>, <count>
+  enabled: true
+  type: [chat]
+  chat: "<#95FF7E><bold>VOTING</bold> <#B6C1C8>▶ <#95FF7E><player> <white>has voted <#95FF7E><count> times <white>for the server <#B6C1C8><click:run_command:'/vote'><hover:show_text:'<#95FF7E>Click to vote'>[/vote]</hover></click>"
 
 # ---- vote goal ----
 

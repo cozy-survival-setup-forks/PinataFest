@@ -17,6 +17,10 @@ votes:
     # The most vote rewards kept per player. 0 means no limit.
     max_queue: 0
 
+  # Votes from several sites usually arrive together. The vote message (vote_broadcast in lang.yml) waits this
+  # many ticks and then says "voted 3 times" once instead of three lines. 0 sends one line per vote.
+  announce_window_ticks: 40
+
   # Played to the player when they vote. Set the particle type to none to skip it.
   effects:
     particle:

@@ -26,6 +26,9 @@ permission, certain items or a recent vote.
 - Votes cast while a player is offline count straight away for the party and for their total, and
   their rewards are saved and paid out after they log in, with an optional limit
 - Particle and sound when a player votes
+- A chat message for everyone when a player votes, `VOTING ▶ Steve has voted for the server [/vote]`, with a clickable `[/vote]`.
+  Votes that arrive together, one per voting site, are joined into `has voted 3 times` (`votes.announce_window_ticks`).
+  Both messages are `vote_broadcast` and `vote_broadcast_multiple` in `lang.yml`
 
 ## Spawn points
 

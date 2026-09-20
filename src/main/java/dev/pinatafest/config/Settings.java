@@ -29,7 +29,7 @@ import java.util.logging.Logger;
 public record Settings(Votes votes, Party party, PinataSettings pinata, Visibility visibility,
                        RewardSets rewards) {
 
-    public record Votes(boolean listen, boolean queueRewards, int maxQueue, Effects effects) {
+    public record Votes(boolean listen, boolean queueRewards, int maxQueue, int announceWindowTicks, Effects effects) {
     }
 
     public record Effects(Particle particle, int count, double spreadX, double spreadY, double spreadZ,
@@ -133,6 +133,7 @@ public record Settings(Votes votes, Party party, PinataSettings pinata, Visibili
                     cfg.getBoolean("votes.listen", true),
                     cfg.getBoolean("votes.offline.queue_rewards", true),
                     Math.max(0, cfg.getInt("votes.offline.max_queue", 0)),
+                    Math.max(0, cfg.getInt("votes.announce_window_ticks", 40)),
                     effects);
         }
 

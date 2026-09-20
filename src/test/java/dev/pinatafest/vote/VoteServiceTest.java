@@ -159,6 +159,35 @@ class VoteServiceTest {
     }
 
     @Test
+    void votesArrivingTogetherAreAnnouncedOnce() {
+        final List<String> said = new ArrayList<>();
+        service.announcer((name, count) -> said.add(name + " x" + count));
+
+        service.receive("Steve", "SiteA");
+        service.receive("Steve", "SiteB");
+        service.receive("Steve", "SiteC");
+        service.receive("Alex", "SiteA");
+        assertTrue(said.isEmpty(), "nothing is said before the window is over");
+
+        server.getScheduler().performTicks(40);
+
+        assertEquals(List.of("Steve x3", "Alex x1"), said);
+    }
+
+    @Test
+    void aLaterVoteStartsANewAnnouncement() {
+        final List<String> said = new ArrayList<>();
+        service.announcer((name, count) -> said.add(name + " x" + count));
+
+        service.receive("Steve", "SiteA");
+        server.getScheduler().performTicks(40);
+        service.receive("Steve", "SiteB");
+        server.getScheduler().performTicks(40);
+
+        assertEquals(List.of("Steve x1", "Steve x1"), said);
+    }
+
+    @Test
     void votifierEventReachesTheService() {
         final List<String> seen = new ArrayList<>();
         assertTrue(VotifierHook.register(plugin, (name, site) -> seen.add(name + "@" + site)));
