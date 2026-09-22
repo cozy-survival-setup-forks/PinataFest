@@ -8,6 +8,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.PlayerLeashEntityEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -48,6 +49,14 @@ public final class PinataListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH)
     public void onInteract(PlayerInteractEntityEvent event) {
         if (service.pinataOf(event.getRightClicked()) != null) {
+            event.setCancelled(true);
+        }
+    }
+
+    /** No leashing it away from everyone else. */
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onLeash(PlayerLeashEntityEvent event) {
+        if (service.pinataOf(event.getEntity()) != null) {
             event.setCancelled(true);
         }
     }

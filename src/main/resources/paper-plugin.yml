@@ -4,7 +4,7 @@ main: dev.pinatafest.PinataFestPlugin
 api-version: '1.21'
 description: Vote rewards and pinata parties for Votifier servers.
 authors:
-  - Cozy Survival
+  - Groovified
 
 dependencies:
   server:

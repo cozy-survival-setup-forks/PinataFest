@@ -13,7 +13,9 @@ import org.bukkit.plugin.Plugin;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
@@ -33,6 +35,11 @@ public final class VoteService {
     /** Votes waiting to be announced, by player, while more from the same player may still arrive. */
     private final Map<String, Integer> pending = new HashMap<>();
     private BiConsumer<String, Integer> announcer = this::broadcastVote;
+
+    /** A vote site that never got our ack resends the same vote, so the last few are remembered here
+     * to stop it being paid twice. Key is name + service, value is when it was first seen. */
+    private final Map<String, Long> recentVotes = new ConcurrentHashMap<>();
+    private static final long DUPLICATE_WINDOW_MILLIS = 4_000;
 
     public VoteService(Plugin plugin, Supplier<Settings> settings, VoteStore store, Messages messages,
                        PinataService pinatas) {
@@ -64,11 +71,21 @@ public final class VoteService {
             return;
         }
         final String cleaned = cleanService(service);
+        if (isDuplicate(username, cleaned)) {
+            return;
+        }
         if (Bukkit.isPrimaryThread()) {
             handle(username, cleaned);
         } else {
             Bukkit.getScheduler().runTask(plugin, () -> handle(username, cleaned));
         }
+    }
+
+    /** True if the same name and service voted within the last few seconds. Also records this one. */
+    private boolean isDuplicate(String username, String service) {
+        final long now = System.currentTimeMillis();
+        recentVotes.entrySet().removeIf(e -> now - e.getValue() > DUPLICATE_WINDOW_MILLIS);
+        return recentVotes.put(username.toLowerCase(Locale.ROOT) + '|' + service, now) != null;
     }
 
     private void handle(String username, String service) {

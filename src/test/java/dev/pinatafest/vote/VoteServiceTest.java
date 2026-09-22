@@ -188,6 +188,16 @@ class VoteServiceTest {
     }
 
     @Test
+    void aResentVoteIsNotPaidTwice() {
+        // a vote site that resends because it never saw our ack should not double the reward
+        service.receive("Alex", "SiteA");
+        service.receive("Alex", "SiteA");
+
+        assertEquals(1, store.find("Alex").total());
+        assertEquals(1, store.find("Alex").queue().size());
+    }
+
+    @Test
     void votifierEventReachesTheService() {
         final List<String> seen = new ArrayList<>();
         assertTrue(VotifierHook.register(plugin, (name, site) -> seen.add(name + "@" + site)));
