@@ -5,7 +5,7 @@
 #
 # When a new version changes the default messages, this number goes up. An older file is then
 # saved as lang.yml.old and replaced, so new messages and titles are not hidden by stale text.
-lang_version: 3
+lang_version: 4
 
 # ---- votes ----
 
@@ -41,8 +41,16 @@ party_start:
   type: [chat, title]
   title: "<gradient:#FF5484:#FFD068:#B3E876:#66FF83:#52D3FF:#B87CFF><bold>PINATA PARTY"
   subtitle: "<white>Starting in <#FFD068><seconds> seconds"
-  times: [10, 40, 10]
+  times: [0, 25, 5]
   chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>A pinata party starts in <#FFD068><seconds> seconds<white>!"
+
+party_tick:
+  # Shown once every second of the countdown after the first, so the title counts 5, 4, 3, 2, 1. Placeholders: <seconds>
+  enabled: true
+  type: [title]
+  title: "<gradient:#FF5484:#FFD068:#B3E876:#66FF83:#52D3FF:#B87CFF><bold>PINATA PARTY"
+  subtitle: "<white>Starting in <#FFD068><seconds>"
+  times: [0, 25, 5]
 
 countdown_bar:
   # Shown on the boss bar. Placeholders: <seconds>
@@ -69,8 +77,8 @@ pinata_spawn:
   enabled: true
   type: [chat, title]
   title: "<gradient:#FF5484:#FFD068:#B3E876:#66FF83:#52D3FF:#B87CFF><bold>PINATA!"
-  subtitle: "<white>Find it at <#FFD068><x>, <y>, <z>"
-  times: [10, 50, 10]
+  subtitle: "<white>Use <#FFD068>/warp pinata <white>to find it!"
+  times: [0, 50, 10]
   chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>A pinata just appeared at <#FFD068><x>, <y>, <z> <white>in <#52D3FF><world><white>!"
   sound:
     key: "minecraft:entity.firework_rocket.launch"

@@ -36,10 +36,11 @@ public final class VoteService {
     private final Map<String, Integer> pending = new HashMap<>();
     private BiConsumer<String, Integer> announcer = this::broadcastVote;
 
-    /** A vote site that never got our ack resends the same vote, so the last few are remembered here
-     * to stop it being paid twice. Key is name + service, value is when it was first seen. */
+    /** A vote site that never got our ack resends the very same vote, stamp included, so the recent
+     * ones are remembered to stop it being paid twice. Key is name + service + stamp, value is when it was seen.
+     * Two separate votes always have different stamps, so fast voting is never mistaken for a resend. */
     private final Map<String, Long> recentVotes = new ConcurrentHashMap<>();
-    private static final long DUPLICATE_WINDOW_MILLIS = 4_000;
+    private static final long DUPLICATE_WINDOW_MILLIS = 120_000;
 
     public VoteService(Plugin plugin, Supplier<Settings> settings, VoteStore store, Messages messages,
                        PinataService pinatas) {
@@ -64,14 +65,19 @@ public final class VoteService {
         return username != null && NAME.matcher(username).matches();
     }
 
-    /** Entry point for a vote from any thread. */
+    /** Entry point for a vote from any thread, without a stamp (commands, tests). */
     public void receive(String username, String service) {
+        receive(username, service, null);
+    }
+
+    /** Entry point for a vote from any thread. The stamp is the time the vote site put on it, or null. */
+    public void receive(String username, String service, String stamp) {
         if (!validName(username)) {
             plugin.getLogger().warning("Ignored a vote with an invalid username.");
             return;
         }
         final String cleaned = cleanService(service);
-        if (isDuplicate(username, cleaned)) {
+        if (stamp != null && isDuplicate(username, cleaned, stamp)) {
             return;
         }
         if (Bukkit.isPrimaryThread()) {
@@ -81,11 +87,11 @@ public final class VoteService {
         }
     }
 
-    /** True if the same name and service voted within the last few seconds. Also records this one. */
-    private boolean isDuplicate(String username, String service) {
+    /** True if this exact vote was seen in the last while. Also records it. */
+    private boolean isDuplicate(String username, String service, String stamp) {
         final long now = System.currentTimeMillis();
         recentVotes.entrySet().removeIf(e -> now - e.getValue() > DUPLICATE_WINDOW_MILLIS);
-        return recentVotes.put(username.toLowerCase(Locale.ROOT) + '|' + service, now) != null;
+        return recentVotes.put(username.toLowerCase(Locale.ROOT) + '|' + service + '|' + stamp, now) != null;
     }
 
     private void handle(String username, String service) {

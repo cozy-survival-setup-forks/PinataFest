@@ -428,6 +428,9 @@ public final class PinataService {
                 spawnAll(party.where, party.amount);
                 continue;
             }
+            if (party.left % 20 == 0) {
+                messages.broadcast("party_tick", Messages.text("seconds", party.left / 20));
+            }
             party.bar.progress(Math.max(0f, Math.min(1f, party.left / (float) party.total)));
             party.bar.name(messages.chat("countdown_bar", Messages.text("seconds", (party.left + 19) / 20)));
             if (config.color() == null && tick % 4 == 0) {

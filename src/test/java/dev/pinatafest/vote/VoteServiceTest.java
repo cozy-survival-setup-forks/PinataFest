@@ -190,20 +190,32 @@ class VoteServiceTest {
     @Test
     void aResentVoteIsNotPaidTwice() {
         // a vote site that resends because it never saw our ack should not double the reward
-        service.receive("Alex", "SiteA");
-        service.receive("Alex", "SiteA");
+        service.receive("Alex", "SiteA", "1790186040130");
+        service.receive("Alex", "SiteA", "1790186040130");
 
         assertEquals(1, store.find("Alex").total());
         assertEquals(1, store.find("Alex").queue().size());
     }
 
     @Test
+    void fastSeparateVotesAreAllCounted() {
+        // same player and site voting again and again is not a resend: every vote has its own stamp
+        service.receive("Alex", "SiteA", "1790186040130");
+        service.receive("Alex", "SiteA", "1790186075589");
+        service.receive("Alex", "SiteA", "1790186075968");
+        service.receive("Alex", "SiteA");
+        service.receive("Alex", "SiteA");
+
+        assertEquals(5, store.find("Alex").total());
+    }
+
+    @Test
     void votifierEventReachesTheService() {
         final List<String> seen = new ArrayList<>();
-        assertTrue(VotifierHook.register(plugin, (name, site) -> seen.add(name + "@" + site)));
+        assertTrue(VotifierHook.register(plugin, (name, site, stamp) -> seen.add(name + "@" + site + "@" + stamp)));
 
         server.getPluginManager().callEvent(new VotifierEvent(new Vote("Steve", "SiteA")));
 
-        assertEquals(List.of("Steve@SiteA"), seen);
+        assertEquals(List.of("Steve@SiteA@1"), seen);
     }
 }

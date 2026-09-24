@@ -221,8 +221,8 @@ rewards:
       ignore_vanished: true
       # Skip this entry when the vote was cast while the player was offline.
       ignore_offline: true
-      commands:
-        - "say %player% has voted for the server!"
+      # The vote_broadcast message in lang.yml already tells everyone, so nothing is said here.
+      commands: []
     iron:
       chance: 75
       commands:
