@@ -27,11 +27,17 @@ public final class VoteStore {
 
     public static final class Entry {
         private int total;
+        private int monthly;
         private long lastVote;
         private final List<Queued> queue = new ArrayList<>();
 
         public int total() {
             return total;
+        }
+
+        /** Votes this month, counted from the first of the month in the configured time zone. */
+        public int monthly() {
+            return monthly;
         }
 
         public long lastVote() {
@@ -44,6 +50,7 @@ public final class VoteStore {
 
         public void addVote(long time) {
             total++;
+            monthly++;
             lastVote = time;
         }
     }
@@ -51,6 +58,8 @@ public final class VoteStore {
     private final Path file;
     private final Map<String, Entry> players = new HashMap<>();
     private int pinataVotes;
+    /** The month the monthly counts belong to, like 2026-09. */
+    private String month;
     private boolean dirty;
 
     public VoteStore(Path file) {
@@ -63,6 +72,7 @@ public final class VoteStore {
         }
         final YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file.toFile());
         pinataVotes = Math.max(0, yaml.getInt("pinata_votes"));
+        month = yaml.getString("month");
         final ConfigurationSection section = yaml.getConfigurationSection("players");
         if (section == null) {
             return;
@@ -74,6 +84,7 @@ public final class VoteStore {
             }
             final Entry entry = new Entry();
             entry.total = saved.getInt("total");
+            entry.monthly = Math.max(0, saved.getInt("monthly"));
             entry.lastVote = saved.getLong("last_vote");
             for (String line : saved.getStringList("queue")) {
                 final int split = line.lastIndexOf('|');
@@ -98,6 +109,35 @@ public final class VoteStore {
         return players.get(key(name));
     }
 
+    /** Starts the given month. When it is a new one every monthly count goes back to zero. @return true if they were reset */
+    public boolean rollover(String current) {
+        if (current.equals(month)) {
+            return false;
+        }
+        final boolean first = month == null;
+        month = current;
+        dirty = true;
+        if (first) {
+            return false;
+        }
+        resetMonthly();
+        return true;
+    }
+
+    public void resetMonthly() {
+        players.values().forEach(entry -> entry.monthly = 0);
+        dirty = true;
+    }
+
+    public int monthly(String name) {
+        final Entry entry = find(name);
+        return entry == null ? 0 : entry.monthly;
+    }
+
+    public void setMonthly(String name, int votes) {
+        entry(name).monthly = Math.max(0, votes);
+    }
+
     /** Votes counted towards the next pinata, whether or not the voter was online. */
     public int pinataVotes() {
         return pinataVotes;
@@ -120,9 +160,11 @@ public final class VoteStore {
     public String snapshot() {
         final YamlConfiguration yaml = new YamlConfiguration();
         yaml.set("pinata_votes", pinataVotes);
+        yaml.set("month", month);
         players.forEach((name, entry) -> {
             final String base = "players." + name + ".";
             yaml.set(base + "total", entry.total);
+            yaml.set(base + "monthly", entry.monthly);
             yaml.set(base + "last_vote", entry.lastVote);
             if (!entry.queue.isEmpty()) {
                 yaml.set(base + "queue", entry.queue.stream().map(q -> q.service() + "|" + q.time()).toList());

@@ -2,6 +2,7 @@ package dev.pinatafest.command;
 
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -61,6 +62,7 @@ public final class PinataFestCommand {
                         .then(Commands.argument("player", StringArgumentType.word())
                                 .requires(source -> source.getSender().hasPermission(Perms.ADMIN))
                                 .executes(this::playerVotes)))
+                .then(monthlyTree())
                 .then(Commands.literal("progress")
                         .requires(source -> source.getSender().hasPermission(Perms.VOTES))
                         .executes(this::progress))
@@ -104,6 +106,30 @@ public final class PinataFestCommand {
                         .requires(source -> source.getSender().hasPermission(Perms.ADMIN))
                         .executes(ctx -> corner(ctx, 1)))
                 .then(visibilityTree());
+    }
+
+    /** monthly for your own count; get, set, add and reset for admins. */
+    private LiteralArgumentBuilder<CommandSourceStack> monthlyTree() {
+        return Commands.literal("monthly")
+                .requires(source -> source.getSender().hasPermission(Perms.VOTES))
+                .executes(this::ownMonthly)
+                .then(Commands.literal("get")
+                        .requires(source -> source.getSender().hasPermission(Perms.ADMIN))
+                        .then(Commands.argument("player", StringArgumentType.word()).executes(this::monthlyOf)))
+                .then(Commands.literal("set")
+                        .requires(source -> source.getSender().hasPermission(Perms.ADMIN))
+                        .then(Commands.argument("player", StringArgumentType.word())
+                                .then(Commands.argument("amount", IntegerArgumentType.integer(0))
+                                        .executes(ctx -> monthlySet(ctx, false)))))
+                .then(Commands.literal("add")
+                        .requires(source -> source.getSender().hasPermission(Perms.ADMIN))
+                        .then(Commands.argument("player", StringArgumentType.word())
+                                .then(Commands.argument("amount", IntegerArgumentType.integer(1))
+                                        .executes(ctx -> monthlySet(ctx, true)))))
+                .then(Commands.literal("reset")
+                        .requires(source -> source.getSender().hasPermission(Perms.ADMIN))
+                        .then(Commands.literal("global").executes(this::monthlyResetAll))
+                        .then(Commands.argument("player", StringArgumentType.word()).executes(this::monthlyReset)));
     }
 
     /** setspawn NAME saves where you stand; add 2d or 3d for a random point inside a zone. */
@@ -183,6 +209,46 @@ public final class PinataFestCommand {
                 Messages.text("player", name),
                 Messages.text("votes", entry == null ? 0 : entry.total()),
                 Messages.text("queued", entry == null ? 0 : entry.queue().size()));
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private int ownMonthly(CommandContext<CommandSourceStack> ctx) {
+        if (!(sender(ctx) instanceof Player player)) {
+            messages.send(sender(ctx), "votes_console");
+            return Command.SINGLE_SUCCESS;
+        }
+        votes.checkMonth();
+        messages.send(player, "monthly_self", Messages.text("votes", store.monthly(player.getName())));
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private int monthlyOf(CommandContext<CommandSourceStack> ctx) {
+        final String name = StringArgumentType.getString(ctx, "player");
+        votes.checkMonth();
+        messages.send(sender(ctx), "monthly_other", Messages.text("player", name), Messages.text("votes", store.monthly(name)));
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private int monthlySet(CommandContext<CommandSourceStack> ctx, boolean add) {
+        final String name = StringArgumentType.getString(ctx, "player");
+        votes.checkMonth();
+        final int amount = IntegerArgumentType.getInteger(ctx, "amount");
+        final int total = (add ? store.monthly(name) : 0) + amount;
+        store.setMonthly(name, total);
+        messages.send(sender(ctx), "monthly_set", Messages.text("player", name), Messages.text("votes", total));
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private int monthlyReset(CommandContext<CommandSourceStack> ctx) {
+        final String name = StringArgumentType.getString(ctx, "player");
+        store.setMonthly(name, 0);
+        messages.send(sender(ctx), "monthly_reset_player", Messages.text("player", name));
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private int monthlyResetAll(CommandContext<CommandSourceStack> ctx) {
+        store.resetMonthly();
+        messages.send(sender(ctx), "monthly_reset_all");
         return Command.SINGLE_SUCCESS;
     }
 

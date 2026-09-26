@@ -9,7 +9,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * %pinatafest_votes% and %pinatafest_queued% for a player, %pinatafest_counter% and
+ * %pinatafest_votes%, %pinatafest_votes_monthly%, %pinatafest_votes_needed_N% (votes left to reach N this month)
+ * and %pinatafest_queued% for a player, %pinatafest_counter% and
  * %pinatafest_left% for the pinata vote goal, %pinatafest_visibility% for the player's choice.
  */
 public final class PapiHook extends PlaceholderExpansion {
@@ -57,9 +58,18 @@ public final class PapiHook extends PlaceholderExpansion {
         if (player == null || player.getName() == null) {
             return "";
         }
+        if (params.toLowerCase().startsWith("votes_needed_")) {
+            try {
+                final int goal = Integer.parseInt(params.substring("votes_needed_".length()));
+                return Integer.toString(Math.max(0, goal - store.monthly(player.getName())));
+            } catch (NumberFormatException e) {
+                return null;
+            }
+        }
         final VoteStore.Entry entry = store.find(player.getName());
         return switch (params.toLowerCase()) {
             case "votes" -> Integer.toString(entry == null ? 0 : entry.total());
+            case "votes_monthly" -> Integer.toString(entry == null ? 0 : entry.monthly());
             case "queued" -> Integer.toString(entry == null ? 0 : entry.queue().size());
             case "visibility" -> player.getPlayer() != null && pinatas.visibility().hides(player.getPlayer())
                     ? "hidden" : "visible";

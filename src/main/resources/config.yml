@@ -17,6 +17,12 @@ votes:
     # The most vote rewards kept per player. 0 means no limit.
     max_queue: 0
 
+  # Votes are also counted per month for %pinatafest_votes_monthly%, and every count goes back to zero on the
+  # first of the month, at midnight in this time zone (a name like America/New_York or UTC). If the server was
+  # off at midnight the reset happens when it starts. /pinatafest monthly reset global does it by hand.
+  monthly:
+    timezone: America/New_York
+
   # Votes from several sites usually arrive together. The vote message (vote_broadcast in lang.yml) waits this
   # many ticks and then says "voted 3 times" once instead of three lines. 0 sends one line per vote.
   announce_window_ticks: 40

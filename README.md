@@ -23,6 +23,7 @@ permission, certain items or a recent vote.
 
 - Reward commands per vote, each with a chance, permission, vote-site filter and options to stop
   rolling, pick one random command, run once, and skip vanished or offline voters
+- Votes are also counted per month, reset by themselves on the first of the month at midnight in `votes.monthly.timezone` (New York by default). The counts are kept in `votes.yml`
 - Votes cast while a player is offline count straight away for the party and for their total, and
   their rewards are saved and paid out after they log in, with an optional limit
 - Particle and sound when a player votes
@@ -60,6 +61,10 @@ this plugin are undone by it, and a title thanks everyone when the last pinata i
 | `/pinatafest progress` | Votes so far towards the next pinata | `pinatafest.votes` (everyone) |
 | `/pinatavisibility [hide\|show\|toggle\|status]` | Hide other players during parties | `pinatafest.visibility` (everyone) |
 | `/pinatafest votes <player>` | Someone else's vote count | `pinatafest.admin` |
+| `/pinatafest monthly` | Your votes this month | `pinatafest.votes` (everyone) |
+| `/pinatafest monthly get <player>` | Someone else's votes this month | `pinatafest.admin` |
+| `/pinatafest monthly set/add <player> <amount>` | Change a player's monthly votes | `pinatafest.admin` |
+| `/pinatafest monthly reset <player or global>` | Reset one player or everyone | `pinatafest.admin` |
 | `/pinatafest summon [location]` | Start a party now | `pinatafest.admin` |
 | `/pinatafest setspawn <name> [2d\|3d] [radius]` | Save a spawn point where you stand | `pinatafest.admin` |
 | `/pinatafest pos1`, `/pinatafest pos2` | Pick the two corners of a zone | `pinatafest.admin` |
@@ -74,6 +79,7 @@ this plugin are undone by it, and a title thanks everyone when the last pinata i
 ## Placeholders
 
 - `%pinatafest_votes%` and `%pinatafest_queued%` - a player's total votes and waiting rewards
+- `%pinatafest_votes_monthly%` - votes this month. `%pinatafest_votes_needed_N%` - votes still needed to reach N this month, 0 once reached
 - `%pinatafest_counter%` and `%pinatafest_left%` - votes counted and votes still needed for the next pinata
 - `%pinatafest_visibility%` - `hidden` or `visible` for the player
 

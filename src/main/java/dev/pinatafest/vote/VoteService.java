@@ -99,6 +99,7 @@ public final class VoteService {
         if (!votes.listen()) {
             return;
         }
+        checkMonth();
 
         // the vote counts for the player and for the pinata whether or not they are online
         final Player player = Bukkit.getPlayerExact(username);
@@ -116,6 +117,16 @@ public final class VoteService {
                 entry.queue().add(new VoteStore.Queued(service, System.currentTimeMillis()));
             }
         }
+    }
+
+    /** Starts a new month when the first has come, in the configured time zone. @return true if the monthly votes were reset */
+    public boolean checkMonth() {
+        final String now = java.time.YearMonth.now(settings.get().votes().monthlyZone()).toString();
+        final boolean reset = store.rollover(now);
+        if (reset) {
+            plugin.getLogger().info("New month (" + now + "), monthly votes reset.");
+        }
+        return reset;
     }
 
     /** Tells everyone about a vote, joining the votes that follow within the window into one message. */

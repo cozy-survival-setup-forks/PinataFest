@@ -29,7 +29,8 @@ import java.util.logging.Logger;
 public record Settings(Votes votes, Party party, PinataSettings pinata, Visibility visibility,
                        RewardSets rewards) {
 
-    public record Votes(boolean listen, boolean queueRewards, int maxQueue, int announceWindowTicks, Effects effects) {
+    public record Votes(boolean listen, boolean queueRewards, int maxQueue, int announceWindowTicks, Effects effects,
+                 java.time.ZoneId monthlyZone) {
     }
 
     public record Effects(Particle particle, int count, double spreadX, double spreadY, double spreadZ,
@@ -134,7 +135,18 @@ public record Settings(Votes votes, Party party, PinataSettings pinata, Visibili
                     cfg.getBoolean("votes.offline.queue_rewards", true),
                     Math.max(0, cfg.getInt("votes.offline.max_queue", 0)),
                     Math.max(0, cfg.getInt("votes.announce_window_ticks", 40)),
-                    effects);
+                    effects,
+                    zone());
+        }
+
+        private java.time.ZoneId zone() {
+            final String name = cfg.getString("votes.monthly.timezone", "America/New_York");
+            try {
+                return java.time.ZoneId.of(name);
+            } catch (java.time.DateTimeException e) {
+                log.warning("votes.monthly.timezone: unknown time zone " + name + ", using UTC");
+                return java.time.ZoneId.of("UTC");
+            }
         }
 
         // ---- party ----

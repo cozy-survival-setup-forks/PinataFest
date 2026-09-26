@@ -200,6 +200,37 @@ progress_off:
   type: [chat]
   chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>Votes do not start pinatas on this server."
 
+# ---- monthly votes ----
+
+monthly_self:
+  # Placeholders: <votes>
+  enabled: true
+  type: [chat]
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>You have voted <#FFD068><votes> <white>times this month."
+
+monthly_other:
+  # Placeholders: <player>, <votes>
+  enabled: true
+  type: [chat]
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <#52D3FF><player> <white>has voted <#FFD068><votes> <white>times this month."
+
+monthly_set:
+  # Placeholders: <player>, <votes>
+  enabled: true
+  type: [chat]
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>Monthly votes of <#52D3FF><player> <white>are now <#FFD068><votes><white>."
+
+monthly_reset_player:
+  # Placeholders: <player>
+  enabled: true
+  type: [chat]
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>Monthly votes of <#52D3FF><player> <white>reset."
+
+monthly_reset_all:
+  enabled: true
+  type: [chat]
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>Monthly votes reset for every player."
+
 # ---- visibility ----
 
 visibility_hidden:

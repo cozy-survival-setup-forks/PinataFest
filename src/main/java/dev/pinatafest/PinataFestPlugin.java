@@ -25,6 +25,7 @@ public class PinataFestPlugin extends JavaPlugin implements Listener {
 
     private static final long SAVE_EVERY_TICKS = 20L * 60 * 5;
     private static final long PAYOUT_DELAY_TICKS = 40L;
+    private static final long MONTH_CHECK_TICKS = 20L * 5;
 
     private volatile Settings settings;
     private Messages messages;
@@ -66,6 +67,8 @@ public class PinataFestPlugin extends JavaPlugin implements Listener {
         });
 
         getServer().getScheduler().runTaskTimer(this, this::saveAsync, SAVE_EVERY_TICKS, SAVE_EVERY_TICKS);
+        // the reset on the first of the month, checked every few seconds so it lands on time and cheaply
+        getServer().getScheduler().runTaskTimer(this, votes::checkMonth, 20L, MONTH_CHECK_TICKS);
         pinatas.start();
     }
 
