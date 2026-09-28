@@ -295,6 +295,30 @@ reload_failed:
   type: [chat]
   chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>A file has a mistake in it and was <#FF5484>not<white> reloaded. The console says which one."
 
+status:
+  # Placeholders: <pinatas>, <countdowns>, <count>, <needed>
+  enabled: true
+  type: [chat]
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <#FFD068><pinatas> <white>pinatas out, <#FFD068><countdowns> <white>countdowns running, <#FFD068><count>/<needed> <white>votes towards the next one."
+
+counter_set:
+  # Placeholders: <count>, <needed>
+  enabled: true
+  type: [chat]
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>The party counter is now <#FFD068><count>/<needed><white>."
+
+queue_info:
+  # Placeholders: <player>, <count>
+  enabled: true
+  type: [chat]
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <#52D3FF><player> <white>has <#FFD068><count> <white>vote rewards waiting."
+
+queue_cleared:
+  # Placeholders: <player>, <count>
+  enabled: true
+  type: [chat]
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>Removed <#FFD068><count> <white>waiting rewards of <#52D3FF><player><white>."
+
 players_only:
   enabled: true
   type: [chat]

@@ -110,6 +110,15 @@ public final class PinataService {
         return visibility;
     }
 
+    public int activeCount() {
+        return active.size();
+    }
+
+    /** Countdowns that have not spawned their pinata yet. */
+    public int countdownCount() {
+        return parties.size();
+    }
+
     public Pinata pinataOf(org.bukkit.entity.Entity entity) {
         return active.get(entity.getUniqueId());
     }

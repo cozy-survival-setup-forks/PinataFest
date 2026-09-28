@@ -5,6 +5,7 @@ import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import dev.pinatafest.PinataFestPlugin;
 import dev.pinatafest.config.Settings;
@@ -17,6 +18,7 @@ import dev.pinatafest.vote.VoteService;
 import dev.pinatafest.vote.VoteStore;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -59,7 +61,7 @@ public final class PinataFestCommand {
                 .then(Commands.literal("votes")
                         .requires(source -> source.getSender().hasPermission(Perms.VOTES))
                         .executes(this::ownVotes)
-                        .then(Commands.argument("player", StringArgumentType.word())
+                        .then(playerArg()
                                 .requires(source -> source.getSender().hasPermission(Perms.ADMIN))
                                 .executes(this::playerVotes)))
                 .then(monthlyTree())
@@ -68,7 +70,7 @@ public final class PinataFestCommand {
                         .executes(this::progress))
                 .then(Commands.literal("fake")
                         .requires(source -> source.getSender().hasPermission(Perms.ADMIN))
-                        .then(Commands.argument("player", StringArgumentType.word())
+                        .then(playerArg()
                                 .executes(ctx -> fake(ctx, "test"))
                                 .then(Commands.argument("service", StringArgumentType.word())
                                         .executes(ctx -> fake(ctx, StringArgumentType.getString(ctx, "service"))))))
@@ -84,6 +86,17 @@ public final class PinataFestCommand {
                 .then(Commands.literal("kill")
                         .requires(source -> source.getSender().hasPermission(Perms.ADMIN))
                         .executes(this::kill))
+                .then(Commands.literal("status")
+                        .requires(source -> source.getSender().hasPermission(Perms.ADMIN))
+                        .executes(this::status))
+                .then(Commands.literal("counter")
+                        .requires(source -> source.getSender().hasPermission(Perms.ADMIN))
+                        .then(Commands.argument("amount", IntegerArgumentType.integer(0)).executes(this::counterSet)))
+                .then(Commands.literal("queue")
+                        .requires(source -> source.getSender().hasPermission(Perms.ADMIN))
+                        .then(Commands.literal("clear")
+                                .then(playerArg().executes(this::queueClear)))
+                        .then(playerArg().executes(this::queueOf)))
                 .then(Commands.literal("reload")
                         .requires(source -> source.getSender().hasPermission(Perms.ADMIN))
                         .executes(this::reload))
@@ -115,21 +128,21 @@ public final class PinataFestCommand {
                 .executes(this::ownMonthly)
                 .then(Commands.literal("get")
                         .requires(source -> source.getSender().hasPermission(Perms.ADMIN))
-                        .then(Commands.argument("player", StringArgumentType.word()).executes(this::monthlyOf)))
+                        .then(playerArg().executes(this::monthlyOf)))
                 .then(Commands.literal("set")
                         .requires(source -> source.getSender().hasPermission(Perms.ADMIN))
-                        .then(Commands.argument("player", StringArgumentType.word())
+                        .then(playerArg()
                                 .then(Commands.argument("amount", IntegerArgumentType.integer(0))
                                         .executes(ctx -> monthlySet(ctx, false)))))
                 .then(Commands.literal("add")
                         .requires(source -> source.getSender().hasPermission(Perms.ADMIN))
-                        .then(Commands.argument("player", StringArgumentType.word())
+                        .then(playerArg()
                                 .then(Commands.argument("amount", IntegerArgumentType.integer(1))
                                         .executes(ctx -> monthlySet(ctx, true)))))
                 .then(Commands.literal("reset")
                         .requires(source -> source.getSender().hasPermission(Perms.ADMIN))
                         .then(Commands.literal("global").executes(this::monthlyResetAll))
-                        .then(Commands.argument("player", StringArgumentType.word()).executes(this::monthlyReset)));
+                        .then(playerArg().executes(this::monthlyReset)));
     }
 
     /** setspawn NAME saves where you stand; add 2d or 3d for a random point inside a zone. */
@@ -272,6 +285,52 @@ public final class PinataFestCommand {
         final String where = location != null ? location : (known.isEmpty() ? null : known.get(0));
         final boolean started = where != null && pinatas.summon(where, 1);
         messages.send(sender(ctx), started ? "summon_ok" : "summon_bad", Messages.text("location", String.valueOf(where)));
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static RequiredArgumentBuilder<CommandSourceStack, String> playerArg() {
+        return Commands.argument("player", StringArgumentType.word()).suggests((ctx, builder) -> {
+            for (Player online : Bukkit.getOnlinePlayers()) {
+                if (online.getName().toLowerCase().startsWith(builder.getRemainingLowerCase())) {
+                    builder.suggest(online.getName());
+                }
+            }
+            return builder.buildFuture();
+        });
+    }
+
+    private int status(CommandContext<CommandSourceStack> ctx) {
+        messages.send(sender(ctx), "status",
+                Messages.text("pinatas", pinatas.activeCount()), Messages.text("countdowns", pinatas.countdownCount()),
+                Messages.text("count", store.pinataVotes()), Messages.text("needed", settings.get().party().votesNeeded()));
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private int counterSet(CommandContext<CommandSourceStack> ctx) {
+        final int amount = IntegerArgumentType.getInteger(ctx, "amount");
+        store.setPinataVotes(amount);
+        messages.send(sender(ctx), "counter_set", Messages.text("count", amount),
+                Messages.text("needed", settings.get().party().votesNeeded()));
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private int queueOf(CommandContext<CommandSourceStack> ctx) {
+        final String name = StringArgumentType.getString(ctx, "player");
+        final VoteStore.Entry entry = store.find(name);
+        messages.send(sender(ctx), "queue_info", Messages.text("player", name),
+                Messages.text("count", entry == null ? 0 : entry.queue().size()));
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private int queueClear(CommandContext<CommandSourceStack> ctx) {
+        final String name = StringArgumentType.getString(ctx, "player");
+        final VoteStore.Entry entry = store.find(name);
+        final int count = entry == null ? 0 : entry.queue().size();
+        if (entry != null) {
+            entry.queue().clear();
+            store.markDirty();
+        }
+        messages.send(sender(ctx), "queue_cleared", Messages.text("player", name), Messages.text("count", count));
         return Command.SINGLE_SUCCESS;
     }
 
