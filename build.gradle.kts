@@ -47,6 +47,9 @@ tasks {
 
     jar {
         archiveFileName = "PinataFest-${project.version}.jar"
+        manifest {
+            attributes("Implementation-Vendor" to "Groovified / Blockie Studios")
+        }
     }
 
     runServer {

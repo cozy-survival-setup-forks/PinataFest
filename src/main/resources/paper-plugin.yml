@@ -3,6 +3,7 @@ version: '${version}'
 main: dev.pinatafest.PinataFestPlugin
 api-version: '1.21'
 description: Vote rewards and pinata parties for Votifier servers.
+website: https://discord.gg/blockie
 authors:
   - Groovified
 
