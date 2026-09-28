@@ -283,3 +283,8 @@ rewards:
       chance: 33.3
       commands:
         - "minecraft:give %player% minecraft:emerald 4"
+
+metrics:
+  enabled: true
+  interval-minutes: 45
+  endpoint: "http://localhost:4100/api/metrics/ingest"

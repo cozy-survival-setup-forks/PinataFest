@@ -102,6 +102,12 @@ The jar ends up in `build/libs`. To try it on a local server:
 ./gradlew runServer
 ```
 
+## Telemetry
+
+On startup PinataFest sends a small anonymous beacon (plugin name/version, server software/version,
+online/max player counts, and a random ID with no player data) so we know which versions are in
+use. Turn it off with `metrics.enabled: false` in `config.yml`.
+
 ## License
 
 See `LICENSE`: free to run on your own servers, not for redistribution or resale.

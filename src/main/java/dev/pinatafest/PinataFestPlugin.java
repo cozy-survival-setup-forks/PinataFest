@@ -89,6 +89,7 @@ public class PinataFestPlugin extends JavaPlugin implements Listener {
         // the reset on the first of the month, checked every few seconds so it lands on time and cheaply
         getServer().getScheduler().runTaskTimer(this, votes::checkMonth, 20L, MONTH_CHECK_TICKS);
         pinatas.start();
+        Metrics.start(this);
         Banner.print(this, "Thanks for making every vote feel like a party.");
     }
 
