@@ -26,6 +26,7 @@ permission, certain items or a recent vote.
 - Votes are also counted per month, reset by themselves on the first of the month at midnight in `votes.monthly.timezone` (New York by default). The counts are kept in `votes.yml`
 - Votes cast while a player is offline count straight away for the party and for their total, and
   their rewards are saved and paid out after they log in, with an optional limit
+- If `votes.yml` or `spawns.yml` cannot be read, the file is kept as `votes.yml.broken-<time>` and never overwritten
 - Particle and sound when a player votes
 - A chat message for everyone when a player votes, `VOTING ▶ Steve has voted for the server [/vote]`, with a clickable `[/vote]`.
   Votes that arrive together, one per voting site, are joined into `has voted 3 times` (`votes.announce_window_ticks`).
@@ -71,8 +72,12 @@ this plugin are undone by it, and a title thanks everyone when the last pinata i
 | `/pinatafest spawns` | List every spawn point | `pinatafest.admin` |
 | `/pinatafest delspawn <name>` | Delete a saved spawn point | `pinatafest.admin` |
 | `/pinatafest kill` | Remove every pinata and countdown | `pinatafest.admin` |
+| `/pinatafest status` | Pinatas out, countdowns running, votes towards the next party | `pinatafest.admin` |
+| `/pinatafest counter <amount>` | Set the votes counted towards the next party | `pinatafest.admin` |
+| `/pinatafest queue <player>` | How many vote rewards wait for an offline player | `pinatafest.admin` |
+| `/pinatafest queue clear <player>` | Throw those waiting rewards away | `pinatafest.admin` |
 | `/pinatafest fake <player> [site]` | Send a test vote | `pinatafest.admin` |
-| `/pinatafest reload` | Reload `config.yml` and `lang.yml` | `pinatafest.admin` |
+| `/pinatafest reload` | Reload `config.yml` and `lang.yml`. A file with a mistake is skipped and the old settings stay | `pinatafest.admin` |
 
 `/pf` works as a short form of `/pinatafest`.
 
