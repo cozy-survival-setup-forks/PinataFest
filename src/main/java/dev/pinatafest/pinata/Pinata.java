@@ -56,7 +56,6 @@ public final class Pinata {
     private boolean nearby = true;
     private boolean textsDirty = true;
     private int babyEnds = -1;
-    private String lastHitter = "";
     private Team glowTeam;
 
     Pinata(Llama llama, Settings.PinataSettings settings, int health) {
@@ -86,16 +85,8 @@ public final class Pinata {
         return health;
     }
 
-    public int maxHealth() {
-        return maxHealth;
-    }
-
     public Set<String> participants() {
         return participants;
-    }
-
-    public String lastHitter() {
-        return lastHitter;
     }
 
     BossBar bar() {
@@ -124,7 +115,6 @@ public final class Pinata {
     int registerHit(String player) {
         textsDirty = true;
         participants.add(player);
-        lastHitter = player;
         return --health;
     }
 
