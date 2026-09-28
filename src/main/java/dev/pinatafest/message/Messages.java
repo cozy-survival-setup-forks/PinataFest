@@ -5,13 +5,13 @@ import net.kyori.adventure.key.Key;
 import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.kyori.adventure.text.minimessage.tag.Tag;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -45,18 +45,20 @@ public final class Messages {
     private final JavaPlugin plugin;
     private final MiniMessage mini = MiniMessage.miniMessage();
     private final Map<String, Entry> entries = new HashMap<>();
-    private String enabledWord = "enabled";
-    private String disabledWord = "disabled";
 
     public Messages(JavaPlugin plugin) {
         this.plugin = plugin;
     }
 
-    public void load() {
+    /**
+     * @return false if lang.yml has a mistake in it. On a reload the messages already loaded are kept; on the
+     * first load there are none, so the bundled texts are used.
+     */
+    public boolean load() {
         final File file = new File(plugin.getDataFolder(), "lang.yml");
         final YamlConfiguration bundled = bundled();
-        if (file.exists() && YamlConfiguration.loadConfiguration(file).getInt("lang_version", 0)
-                < bundled.getInt("lang_version", 0)) {
+        YamlConfiguration lang = parse(file);
+        if (lang != null && lang.getInt("lang_version", 0) < bundled.getInt("lang_version", 0)) {
             final File old = new File(plugin.getDataFolder(), "lang.yml.old");
             old.delete();
             if (file.renameTo(old)) {
@@ -66,9 +68,18 @@ public final class Messages {
         }
         if (!file.exists()) {
             plugin.saveResource("lang.yml", false);
+            lang = parse(file);
         }
-
-        final YamlConfiguration lang = YamlConfiguration.loadConfiguration(file);
+        boolean ok = true;
+        if (lang == null) {
+            plugin.getLogger().severe("lang.yml has a mistake in it, "
+                    + (entries.isEmpty() ? "using the bundled texts" : "keeping the messages already loaded") + ".");
+            if (!entries.isEmpty()) {
+                return false;
+            }
+            lang = new YamlConfiguration();
+            ok = false;
+        }
         lang.setDefaults(bundled);
 
         // keys missing from the file on disk fall back to the bundled ones, so messages added in
@@ -83,12 +94,35 @@ public final class Messages {
             if (section == null && lang.getDefaults() != null) {
                 section = lang.getDefaults().getConfigurationSection(key);
             }
-            if (section != null && !key.equals("states")) {
+            if (section != null) {
                 entries.put(key, readEntry(key, section));
             }
         }
-        enabledWord = lang.getString("states.enabled", "enabled");
-        disabledWord = lang.getString("states.disabled", "disabled");
+        return ok;
+    }
+
+    /** lang.yml parsed strictly: a file with a mistake is null, not an empty file. */
+    private YamlConfiguration parse(File file) {
+        if (!file.exists()) {
+            return null;
+        }
+        final YamlConfiguration yaml = new YamlConfiguration();
+        try {
+            yaml.load(file);
+            return yaml;
+        } catch (IOException | InvalidConfigurationException e) {
+            plugin.getLogger().severe("lang.yml could not be read: " + e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * The text under a key. The one-argument getString falls back to the bundled lang.yml, the two-argument one
+     * never does, so a key an older file lacks still shows something.
+     */
+    private static String text(ConfigurationSection section, String key) {
+        final String value = section.getString(key);
+        return value == null ? "" : value;
     }
 
     private YamlConfiguration bundled() {
@@ -108,10 +142,10 @@ public final class Messages {
                 types.contains("chat"),
                 types.contains("actionbar"),
                 types.contains("title"),
-                Legacy.toMiniMessage(section.getString("chat", "")),
-                Legacy.toMiniMessage(section.getString("actionbar", "")),
-                Legacy.toMiniMessage(section.getString("title", "")),
-                Legacy.toMiniMessage(section.getString("subtitle", "")),
+                Legacy.toMiniMessage(text(section, "chat")),
+                Legacy.toMiniMessage(text(section, "actionbar")),
+                Legacy.toMiniMessage(text(section, "title")),
+                Legacy.toMiniMessage(text(section, "subtitle")),
                 Title.Times.times(ticks(times, 0, 10), ticks(times, 1, 50), ticks(times, 2, 10)),
                 sound(key, section.getConfigurationSection("sound")));
     }
@@ -145,12 +179,6 @@ public final class Messages {
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
                 .toList();
-    }
-
-    /** The coloured word for a switch, ready to use as a {@code <state>} placeholder. */
-    public TagResolver state(boolean on) {
-        return TagResolver.resolver("state", (args, ctx) ->
-                Tag.inserting(mini.deserialize(Legacy.toMiniMessage(on ? enabledWord : disabledWord))));
     }
 
     public static TagResolver text(String name, Object value) {
@@ -202,9 +230,9 @@ public final class Messages {
     private Parsed parse(Entry entry, TagResolver... resolvers) {
         final TagResolver all = TagResolver.resolver(resolvers);
         return new Parsed(
-                entry.chat() ? mini.deserialize(entry.chatText(), all) : null,
-                entry.actionBar() ? mini.deserialize(entry.actionBarText(), all) : null,
-                entry.title() ? Title.title(mini.deserialize(entry.titleText(), all),
+                entry.chat() && !entry.chatText().isBlank() ? mini.deserialize(entry.chatText(), all) : null,
+                entry.actionBar() && !entry.actionBarText().isBlank() ? mini.deserialize(entry.actionBarText(), all) : null,
+                entry.title() && !(entry.titleText().isBlank() && entry.subtitleText().isBlank()) ? Title.title(mini.deserialize(entry.titleText(), all),
                         mini.deserialize(entry.subtitleText(), all), entry.times()) : null);
     }
 

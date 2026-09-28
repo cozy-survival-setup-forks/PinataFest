@@ -233,7 +233,7 @@ public final class PinataFestCommand {
         final String name = StringArgumentType.getString(ctx, "player");
         votes.checkMonth();
         final int amount = IntegerArgumentType.getInteger(ctx, "amount");
-        final int total = (add ? store.monthly(name) : 0) + amount;
+        final int total = (int) Math.min(Integer.MAX_VALUE, (add ? store.monthly(name) : 0L) + amount);
         store.setMonthly(name, total);
         messages.send(sender(ctx), "monthly_set", Messages.text("player", name), Messages.text("votes", total));
         return Command.SINGLE_SUCCESS;
@@ -281,8 +281,7 @@ public final class PinataFestCommand {
     }
 
     private int reload(CommandContext<CommandSourceStack> ctx) {
-        plugin.reload();
-        messages.send(sender(ctx), "reload");
+        messages.send(sender(ctx), plugin.reload() ? "reload" : "reload_failed");
         return Command.SINGLE_SUCCESS;
     }
 

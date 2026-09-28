@@ -1,6 +1,7 @@
 package dev.pinatafest.spawn;
 
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.IOException;
@@ -28,11 +29,26 @@ public final class SpawnStore {
     }
 
     public void load(Logger log) {
-        points.clear();
         if (!Files.exists(file)) {
+            points.clear();
             return;
         }
-        final YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file.toFile());
+        final YamlConfiguration yaml = new YamlConfiguration();
+        yaml.options().pathSeparator('/');
+        try {
+            yaml.load(file.toFile());
+        } catch (IOException | InvalidConfigurationException e) {
+            // keep the points already loaded, and move the file away so the next save does not replace it
+            final Path aside = file.resolveSibling(file.getFileName() + ".broken-" + System.currentTimeMillis() / 1000);
+            try {
+                Files.move(file, aside);
+            } catch (IOException moveFailed) {
+                log.severe("spawns.yml is broken and could not be moved aside: " + moveFailed.getMessage());
+            }
+            log.severe("spawns.yml could not be read (" + e.getMessage() + "). It was kept as " + aside.getFileName() + ".");
+            return;
+        }
+        points.clear();
         for (String name : yaml.getKeys(false)) {
             final ConfigurationSection section = yaml.getConfigurationSection(name);
             final SpawnPoint point = section == null ? null : SpawnPoint.read(section);
@@ -69,6 +85,7 @@ public final class SpawnStore {
 
     private void save() throws IOException {
         final YamlConfiguration yaml = new YamlConfiguration();
+        yaml.options().pathSeparator('/');
         points.forEach((name, point) -> point.write(yaml.createSection(name)));
 
         Files.createDirectories(file.getParent());

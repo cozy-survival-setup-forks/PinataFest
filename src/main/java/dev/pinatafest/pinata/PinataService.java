@@ -110,10 +110,6 @@ public final class PinataService {
         return visibility;
     }
 
-    public int activeCount() {
-        return active.size();
-    }
-
     public Pinata pinataOf(org.bukkit.entity.Entity entity) {
         return active.get(entity.getUniqueId());
     }
@@ -130,9 +126,17 @@ public final class PinataService {
 
         final int count = store.pinataVotes() + 1;
         if (count >= party.votesNeeded()) {
+            // the votes are only used up once there is somewhere to put the pinata
+            final Location where = anySpot(places);
+            if (where == null) {
+                store.setPinataVotes(Math.min(count, party.votesNeeded()));
+                plugin.getLogger().warning("The party goal was reached but none of the spawn points can be used, the votes are kept."
+                        + " Check the world names of the spawn points.");
+                return;
+            }
             store.setPinataVotes(count - party.votesNeeded());
             messages.broadcast("vote_goal", Messages.text("player", voter));
-            summon(places.get(ThreadLocalRandom.current().nextInt(places.size())), party.amount());
+            begin(where, party.amount());
         } else {
             store.setPinataVotes(count);
             messages.broadcast("vote_progress", Messages.text("player", voter), Messages.text("count", count),
@@ -157,17 +161,38 @@ public final class PinataService {
 
     /** Starts a party at a named spawn point. Returns false if the point or its world is not usable. */
     public boolean summon(String spotName, int amount) {
-        final SpawnPoint point = spawnPoints().get(spotName.toLowerCase(Locale.ROOT));
-        if (point == null) {
-            return false;
-        }
-        final Location where = point.pick(ThreadLocalRandom.current());
+        final Location where = spot(spotName);
         if (where == null) {
-            plugin.getLogger().warning("Spawn point " + spotName + " uses world " + point.world() + ", which is not loaded");
             return false;
         }
         begin(where, amount);
         return true;
+    }
+
+    /** A place to put a pinata at a named spawn point, or null if the point or its world is not usable. */
+    private Location spot(String spotName) {
+        final SpawnPoint point = spawnPoints().get(spotName.toLowerCase(Locale.ROOT));
+        if (point == null) {
+            return null;
+        }
+        final Location where = point.pick(ThreadLocalRandom.current());
+        if (where == null) {
+            plugin.getLogger().warning("Spawn point " + spotName + " uses world " + point.world() + ", which is not loaded");
+        }
+        return where;
+    }
+
+    /** Tries the given spawn points in random order and returns the first usable place. */
+    private Location anySpot(List<String> places) {
+        final List<String> order = new ArrayList<>(places);
+        java.util.Collections.shuffle(order, ThreadLocalRandom.current());
+        for (String name : order) {
+            final Location where = spot(name);
+            if (where != null) {
+                return where;
+            }
+        }
+        return null;
     }
 
     private void begin(Location where, int amount) {
@@ -196,7 +221,7 @@ public final class PinataService {
         final double x = center.getX() + random.nextDouble(-4, 4);
         final double z = center.getZ() + random.nextDouble(-4, 4);
         final World world = center.getWorld();
-        return new Location(world, x, Math.max(center.getY(), world.getHighestBlockYAt((int) x, (int) z) + 1), z);
+        return new Location(world, x, Math.max(center.getY(), world.getHighestBlockYAt((int) Math.floor(x), (int) Math.floor(z)) + 1), z);
     }
 
     /** Creates one pinata right here, without any countdown. */
@@ -267,6 +292,7 @@ public final class PinataService {
             at.getWorld().playSound(settings.get().pinata().hitSound(), at.getX(), at.getY(), at.getZ());
         }
         run(Rewards.forPlayer(settings.get().rewards().hit(), voter(player), ThreadLocalRandom.current()));
+        run(Rewards.once(settings.get().rewards().hit(), ThreadLocalRandom.current()));
 
         if (left <= 0) {
             die(pinata, player);
@@ -283,6 +309,7 @@ public final class PinataService {
 
         final ThreadLocalRandom random = ThreadLocalRandom.current();
         run(Rewards.forPlayer(settings.get().rewards().lastHit(), voter(last), random));
+        run(Rewards.once(settings.get().rewards().lastHit(), random));
 
         final Collection<? extends Player> winners = config.rewardEveryone()
                 ? Bukkit.getOnlinePlayers()
@@ -311,6 +338,7 @@ public final class PinataService {
                     .withFade(Color.fromRGB(random.nextInt(0x1000000)))
                     .build());
             firework.setFireworkMeta(meta);
+            firework.getPersistentDataContainer().set(PinataListener.FIREWORK, org.bukkit.persistence.PersistentDataType.BYTE, (byte) 1);
             firework.detonate();
         }
     }
@@ -343,9 +371,8 @@ public final class PinataService {
 
         for (Pinata pinata : active.isEmpty() ? List.<Pinata>of() : new ArrayList<>(active.values())) {
             if (!pinata.isAlive()) {
-                hideBar(pinata);
-                pinata.cleanUp();
-                active.remove(pinata.entity().getUniqueId());
+                // gone without being broken: its chunk unloaded, or something removed it
+                expire(pinata);
                 continue;
             }
             pinata.tick(messages);

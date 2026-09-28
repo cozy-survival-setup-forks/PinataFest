@@ -108,6 +108,8 @@ public final class VoteService {
         pinatas.countVote(name);
         announce(name, votes.announceWindowTicks());
 
+        Rewards.once(settings.get().rewards().vote(), ThreadLocalRandom.current())
+                .forEach(command -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command));
         if (player != null) {
             grant(player, service, false);
             playEffects(player);
@@ -167,7 +169,8 @@ public final class VoteService {
 
         final List<VoteStore.Queued> waiting = new ArrayList<>(entry.queue());
         entry.queue().clear();
-        store.markDirty();
+        // on disk before anything is paid: if the server dies right after, the queue must not come back
+        store.flush(plugin.getLogger());
 
         messages.send(player, "queued_paid", Messages.text("count", waiting.size()));
         waiting.forEach(vote -> grant(player, vote.service(), true));

@@ -1,6 +1,7 @@
 package dev.pinatafest.vote;
 
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.IOException;
@@ -9,7 +10,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -26,9 +26,9 @@ public final class VoteStore {
     }
 
     public static final class Entry {
-        private int total;
-        private int monthly;
-        private long lastVote;
+        private volatile int total;
+        private volatile int monthly;
+        private volatile long lastVote;
         private final List<Queued> queue = new ArrayList<>();
 
         public int total() {
@@ -55,8 +55,12 @@ public final class VoteStore {
         }
     }
 
+    /** Names can hold dots ("Notch.total", a Bedrock ".Steve"), so the file uses a slash between path parts, which no name has. */
+    private static final char SEPARATOR = '/';
+
     private final Path file;
-    private final Map<String, Entry> players = new HashMap<>();
+    // read by placeholder requests from other threads, changed only on the main thread
+    private final Map<String, Entry> players = new java.util.concurrent.ConcurrentHashMap<>();
     private int pinataVotes;
     /** The month the monthly counts belong to, like 2026-09. */
     private String month;
@@ -70,7 +74,22 @@ public final class VoteStore {
         if (!Files.exists(file)) {
             return;
         }
-        final YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file.toFile());
+        final YamlConfiguration yaml = new YamlConfiguration();
+        yaml.options().pathSeparator(SEPARATOR);
+        try {
+            yaml.load(file.toFile());
+        } catch (IOException | InvalidConfigurationException e) {
+            // reading it as empty would make the next save replace every vote total with nothing
+            final Path aside = file.resolveSibling(file.getFileName() + ".broken-" + System.currentTimeMillis() / 1000);
+            try {
+                Files.move(file, aside);
+            } catch (IOException moveFailed) {
+                log.severe("votes.yml is broken and could not be moved aside: " + moveFailed.getMessage());
+            }
+            log.severe("votes.yml could not be read (" + e.getMessage() + "). It was kept as " + aside.getFileName()
+                    + " and counting starts from zero. Fix that file and copy the totals back.");
+            return;
+        }
         pinataVotes = Math.max(0, yaml.getInt("pinata_votes"));
         month = yaml.getString("month");
         final ConfigurationSection section = yaml.getConfigurationSection("players");
@@ -159,10 +178,11 @@ public final class VoteStore {
     /** The current contents as YAML, and marks them as saved. Call on the main thread. */
     public String snapshot() {
         final YamlConfiguration yaml = new YamlConfiguration();
+        yaml.options().pathSeparator(SEPARATOR);
         yaml.set("pinata_votes", pinataVotes);
         yaml.set("month", month);
         players.forEach((name, entry) -> {
-            final String base = "players." + name + ".";
+            final String base = "players/" + name + "/";
             yaml.set(base + "total", entry.total);
             yaml.set(base + "monthly", entry.monthly);
             yaml.set(base + "last_vote", entry.lastVote);
@@ -174,8 +194,23 @@ public final class VoteStore {
         return yaml.saveToString();
     }
 
+    /** Puts the dirty mark back after a failed write, so the next save tries again. */
+    public void writeFailed() {
+        dirty = true;
+    }
+
+    /** Saves right now, on this thread. Used before something that must not be paid twice if the server dies. */
+    public void flush(Logger log) {
+        try {
+            write(snapshot());
+        } catch (IOException e) {
+            dirty = true;
+            log.severe("Could not save votes.yml: " + e.getMessage());
+        }
+    }
+
     /** Writes a snapshot through a temporary file so a crash never leaves half a file behind. */
-    public void write(String snapshot) throws IOException {
+    public synchronized void write(String snapshot) throws IOException {
         Files.createDirectories(file.getParent());
         final Path temp = file.resolveSibling(file.getFileName() + ".tmp");
         Files.writeString(temp, snapshot, StandardCharsets.UTF_8);

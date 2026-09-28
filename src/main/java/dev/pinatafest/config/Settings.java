@@ -260,7 +260,9 @@ public record Settings(Votes votes, Party party, PinataSettings pinata, Visibili
                 }
                 final List<String> commands = entry.getStringList("commands");
                 if (commands.isEmpty()) {
-                    log.warning(path + "." + id + " has no commands, skipping it");
+                    if (!entry.isList("commands")) {
+                        log.warning(path + "." + id + " has no commands, skipping it");
+                    }
                     continue;
                 }
                 final Set<String> services = new HashSet<>();

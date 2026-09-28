@@ -67,11 +67,6 @@ public final class PartyVisibility {
         refresh();
     }
 
-    /** Something changed that could affect who sees whom; the next check will look at it. */
-    public void markDirty() {
-        dirty = true;
-    }
-
     /** Called about once a second. Does real work only if a pinata came or went, or something was marked. */
     public void check() {
         if (dirty || !activeWorlds.get().equals(lastWorlds)) {
@@ -127,7 +122,15 @@ public final class PartyVisibility {
     public void forget(Player player) {
         hiders.remove(player.getUniqueId());
         hidden.remove(player.getUniqueId());
-        hidden.values().forEach(targets -> targets.remove(player.getUniqueId()));
+        // Paper keeps a hide by player id, so a player who comes back would still be invisible to these viewers
+        hidden.forEach((viewerId, targets) -> {
+            if (targets.remove(player.getUniqueId())) {
+                final Player viewer = Bukkit.getPlayer(viewerId);
+                if (viewer != null) {
+                    viewer.showPlayer(plugin, player);
+                }
+            }
+        });
     }
 
     private void apply(Player viewer, Set<UUID> wanted) {

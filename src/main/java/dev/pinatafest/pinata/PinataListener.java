@@ -1,6 +1,8 @@
 package dev.pinatafest.pinata;
 
 import org.bukkit.Bukkit;
+import org.bukkit.NamespacedKey;
+import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
@@ -13,6 +15,8 @@ import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
 
 /**
@@ -21,12 +25,23 @@ import org.bukkit.plugin.Plugin;
  */
 public final class PinataListener implements Listener {
 
+    /** Marks the fireworks of a broken pinata, which are for show and never hurt anyone. */
+    static final NamespacedKey FIREWORK = new NamespacedKey("pinatafest", "firework");
+
     private final Plugin plugin;
     private final PinataService service;
 
     public PinataListener(Plugin plugin, PinataService service) {
         this.plugin = plugin;
         this.service = service;
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onFireworkDamage(EntityDamageByEntityEvent event) {
+        if (event.getDamager() instanceof Firework firework
+                && firework.getPersistentDataContainer().has(FIREWORK, PersistentDataType.BYTE)) {
+            event.setCancelled(true);
+        }
     }
 
     @EventHandler(priority = EventPriority.HIGH)
@@ -40,7 +55,10 @@ public final class PinataListener implements Listener {
         if (event instanceof EntityDamageByEntityEvent byEntity) {
             final Player attacker = attacker(byEntity);
             if (attacker != null) {
-                service.hit(pinata, attacker, attacker.getInventory().getItemInMainHand());
+                // a thrown or shot hit has no tool in hand: it cannot satisfy a required item
+                final ItemStack held = byEntity.getDamager() instanceof Player
+                        ? attacker.getInventory().getItemInMainHand() : ItemStack.empty();
+                service.hit(pinata, attacker, held);
             }
         }
     }

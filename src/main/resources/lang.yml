@@ -290,6 +290,11 @@ reload:
   type: [chat]
   chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>Config and messages <#66FF83>reloaded<white>."
 
+reload_failed:
+  enabled: true
+  type: [chat]
+  chat: "<#FF5484><bold>P</bold><#FFD068><bold>I</bold><#B3E876><bold>N</bold><#66FF83><bold>A</bold><#52D3FF><bold>T</bold><#B87CFF><bold>A</bold> <#B6C1C8>⏵ <white>A file has a mistake in it and was <#FF5484>not<white> reloaded. The console says which one."
+
 players_only:
   enabled: true
   type: [chat]

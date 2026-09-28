@@ -12,13 +12,18 @@ import dev.pinatafest.spawn.SpawnStore;
 import dev.pinatafest.vote.VoteService;
 import dev.pinatafest.vote.VoteStore;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
+import org.bukkit.configuration.InvalidConfigurationException;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public class PinataFestPlugin extends JavaPlugin implements Listener {
@@ -36,8 +41,22 @@ public class PinataFestPlugin extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
+        try {
+            enableInner();
+        } catch (RuntimeException e) {
+            getLogger().log(java.util.logging.Level.SEVERE, "PinataFest could not start, check config.yml, lang.yml, votes.yml and spawns.yml for mistakes", e);
+            getServer().getPluginManager().disablePlugin(this);
+        }
+    }
+
+    private void enableInner() {
         saveDefaultConfig();
-        settings = Settings.load(getConfig(), getLogger());
+        YamlConfiguration config = parseConfig();
+        if (config == null) {
+            getLogger().severe("config.yml has a mistake in it, so the built-in settings are used until it is fixed and reloaded.");
+            config = bundledConfig();
+        }
+        settings = Settings.load(config, getLogger());
         Perms.register(getServer().getPluginManager());
 
         store = new VoteStore(getDataFolder().toPath().resolve("votes.yml"));
@@ -86,12 +105,35 @@ public class PinataFestPlugin extends JavaPlugin implements Listener {
         }
     }
 
-    /** Re-reads config.yml and lang.yml. Pinatas that are already out keep the look they were spawned with. */
-    public void reload() {
-        reloadConfig();
-        settings = Settings.load(getConfig(), getLogger());
+    /**
+     * Re-reads config.yml and lang.yml. Pinatas that are already out keep the look they were spawned with.
+     *
+     * @return false if a file has a mistake in it: that file is left as it was loaded before
+     */
+    public boolean reload() {
+        final YamlConfiguration config = parseConfig();
+        boolean ok = config != null;
+        if (ok) {
+            settings = Settings.load(config, getLogger());
+        }
         spawns.load(getLogger());
-        messages.load();
+        return messages.load() && ok;
+    }
+
+    /** config.yml as a fresh parse, or null (and a message in the log) if it is broken. */
+    private YamlConfiguration parseConfig() {
+        final YamlConfiguration yaml = new YamlConfiguration();
+        try {
+            yaml.load(new File(getDataFolder(), "config.yml"));
+            return yaml;
+        } catch (IOException | InvalidConfigurationException e) {
+            getLogger().log(java.util.logging.Level.SEVERE, "config.yml could not be read: " + e.getMessage());
+            return null;
+        }
+    }
+
+    private YamlConfiguration bundledConfig() {
+        return YamlConfiguration.loadConfiguration(new InputStreamReader(getResource("config.yml"), StandardCharsets.UTF_8));
     }
 
     @EventHandler
@@ -116,6 +158,7 @@ public class PinataFestPlugin extends JavaPlugin implements Listener {
                 store.write(snapshot);
             } catch (IOException e) {
                 getLogger().severe("Could not save votes.yml: " + e.getMessage());
+                getServer().getScheduler().runTask(this, store::writeFailed);
             }
         });
     }
