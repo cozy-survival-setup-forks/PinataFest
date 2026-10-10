@@ -4,12 +4,14 @@ import dev.pinatafest.config.Settings;
 import dev.pinatafest.message.Messages;
 import dev.pinatafest.pinata.PinataService;
 import dev.pinatafest.reward.Rewards;
+import dev.pinatafest.safe.Journal;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.metadata.MetadataValue;
 import org.bukkit.plugin.Plugin;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -18,6 +20,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 import java.util.function.Supplier;
 
 /**
@@ -119,6 +122,7 @@ public final class VoteService {
                 entry.queue().add(new VoteStore.Queued(service, System.currentTimeMillis()));
             }
         }
+        store.saveSoon(plugin.getLogger());
     }
 
     /** Starts a new month when the first has come, in the configured time zone. @return true if the monthly votes were reset */
@@ -168,13 +172,47 @@ public final class VoteService {
         }
 
         final List<VoteStore.Queued> waiting = new ArrayList<>(entry.queue());
+        final Journal journal = store.journal();
+        String record = null;
+        if (journal != null) {
+            try {
+                // written before anything is paid: a stop in the middle is then known about, and never paid again
+                record = journal.begin("queued-votes", "player=" + player.getName() + " count=" + waiting.size()
+                        + " services=" + waiting.stream().map(VoteStore.Queued::service).collect(Collectors.joining(",")));
+            } catch (SQLException e) {
+                plugin.getLogger().severe("The payout record could not be written, so the queued rewards of " + player.getName()
+                        + " were not paid yet. They stay queued. " + e.getMessage());
+                return;
+            }
+        }
         entry.queue().clear();
         // on disk before anything is paid: if the server dies right after, the queue must not come back
-        store.flush(plugin.getLogger());
+        if (!store.flush(plugin.getLogger())) {
+            entry.queue().addAll(waiting);
+            plugin.getLogger().severe("The queue of " + player.getName() + " could not be saved, so nothing was paid and the rewards stay queued.");
+            finish(journal, record, "queue could not be saved", false);
+            return;
+        }
 
         messages.send(player, "queued_paid", Messages.text("count", waiting.size()));
         waiting.forEach(vote -> grant(player, vote.service(), true));
         playEffects(player);
+        finish(journal, record, null, true);
+    }
+
+    private void finish(Journal journal, String record, String reason, boolean ok) {
+        if (journal == null || record == null) {
+            return;
+        }
+        try {
+            if (ok) {
+                journal.succeeded(record);
+            } else {
+                journal.failed(record, reason);
+            }
+        } catch (SQLException e) {
+            plugin.getLogger().warning("The payout record could not be finished: " + e.getMessage());
+        }
     }
 
     private void grant(Player player, String service, boolean votedOffline) {

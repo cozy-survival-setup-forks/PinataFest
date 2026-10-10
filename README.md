@@ -23,10 +23,10 @@ permission, certain items or a recent vote.
 
 - Reward commands per vote, each with a chance, permission, vote-site filter and options to stop
   rolling, pick one random command, run once, and skip vanished or offline voters
-- Votes are also counted per month, reset by themselves on the first of the month at midnight in `votes.monthly.timezone` (New York by default). The counts are kept in `votes.yml`
+- Votes are also counted per month, reset by themselves on the first of the month at midnight in `votes.monthly.timezone` (New York by default). The counts are kept in `votes.db`
 - Votes cast while a player is offline count straight away for the party and for their total, and
   their rewards are saved and paid out after they log in, with an optional limit
-- If `votes.yml` or `spawns.yml` cannot be read, the file is kept as `votes.yml.broken-<time>` and never overwritten
+- Votes, totals and the rewards waiting for offline players are kept in `votes.db` (SQLite). An older `votes.yml` is brought in once at the first start, in one step and checked (players, vote totals, monthly totals and waiting rewards must match), and only then renamed to `votes.yml.migrated`. If it cannot be read the plugin stays off and the file is left untouched'+nl+'- Paying out waiting rewards is written to a record first. If the server stops in the middle, those rewards are not paid a second time: they are listed in `/pinatafest doctor` and the console, and after you have checked them `/pinatafest doctor resolve <id>` clears the entry'+nl+'- If `spawns.yml` cannot be read, the file is kept as `spawns.yml.broken-<time>` and never overwritten
 - Particle and sound when a player votes
 - A chat message for everyone when a player votes, `VOTING ▶ Steve has voted for the server [/vote]`, with a clickable `[/vote]`.
   Votes that arrive together, one per voting site, are joined into `has voted 3 times` (`votes.announce_window_ticks`).
@@ -107,11 +107,21 @@ The jar ends up in `build/libs`. To try it on a local server:
 ./gradlew runServer
 ```
 
+## Keeping your files safe
+
+- `config.yml` and `lang.yml` start with a `config-version` / `lang-version` number. After an update, new settings are added to your files with their comments, and nothing you changed is touched. The old file is kept next to it as `<name>.<date>.bak` (the newest 5). A setting is only removed when the changelog says so.
+- A value with a mistake (a negative time, an item that does not exist, text where a number belongs) is named in the console by file and key. On a reload, the settings in use stay as they were.
+- Files are written to a temporary file and moved into place, with the previous version kept as `.bak`. A file that cannot be read is restored from its `.bak`, and the unreadable one is kept as `.broken-<time>`.
+- A file or database that was made by a newer version of the plugin is left alone and a warning is logged.
+- `votes.db` is a SQLite database in WAL mode. It is checked when the plugin starts, a copy is made on a schedule (`backup.interval-hours`, `backup.keep` in `config.yml`, in the `backups` folder) and every copy is opened and checked before older ones are removed. A damaged database is replaced by the newest copy that checks out, or, where nothing may be lost, the plugin stays off and the file is left untouched.
+- The backup is a consistent snapshot, not a copy of the open file.
+- `/pinatafest doctor` shows the health of the files, versions, last backup and recent save failures (no player data). `/pinatafest backup now` makes a checked backup right away. Both need the admin permission.
+
 ## Telemetry
 
 On startup PinataFest sends a small anonymous beacon (plugin name/version, server software/version,
 online/max player counts, and a random ID with no player data) so we know which versions are in
-use. Turn it off with `metrics.enabled: false` in `config.yml`.
+use. Turn it off with `metrics.enabled: false` in `config.yml`. The random ID is kept as `server-id` in `votes.db` (older versions kept it in a `.server-id` file, which is moved over unchanged). The address and the interval are fixed in the plugin and are not settings.
 
 ## License
 

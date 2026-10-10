@@ -1,3 +1,4 @@
+lang-version: 1
 # PinataFest - lang.yml
 # Every message can be sent as chat, action bar, title or any mix, with an optional sound.
 # Text supports MiniMessage as well as &a and &#RRGGBB codes.

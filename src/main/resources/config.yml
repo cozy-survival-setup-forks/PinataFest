@@ -1,3 +1,4 @@
+config-version: 1
 # PinataFest - config.yml
 # Every vote counts towards a pinata party. Reload with /pinatafest reload.
 # Durations look like 30s, 10m, 3h; a plain 0 switches a time limit off.
@@ -284,6 +285,13 @@ rewards:
       commands:
         - "minecraft:give %player% minecraft:emerald 4"
 
+# Copies of the vote database (votes.db), made while the server runs and checked before older ones are removed.
+# They are in the "backups" folder. /pinatafest backup now makes one at once.
+backup:
+  # Hours between copies.
+  interval-hours: 6
+  # How many copies to keep.
+  keep: 7
+
 metrics:
   enabled: true
-  interval-minutes: 45

@@ -100,6 +100,14 @@ public final class PinataFestCommand {
                 .then(Commands.literal("reload")
                         .requires(source -> source.getSender().hasPermission(Perms.ADMIN))
                         .executes(this::reload))
+                .then(Commands.literal("doctor")
+                        .requires(source -> source.getSender().hasPermission(Perms.ADMIN))
+                        .executes(this::doctor)
+                        .then(Commands.literal("resolve")
+                                .then(Commands.argument("id", StringArgumentType.word()).executes(this::resolvePayout))))
+                .then(Commands.literal("backup")
+                        .requires(source -> source.getSender().hasPermission(Perms.ADMIN))
+                        .then(Commands.literal("now").executes(this::backup)))
                 .then(setSpawn())
                 .then(Commands.literal("delspawn")
                         .requires(source -> source.getSender().hasPermission(Perms.ADMIN))
@@ -336,6 +344,22 @@ public final class PinataFestCommand {
 
     private int kill(CommandContext<CommandSourceStack> ctx) {
         messages.send(sender(ctx), "killed", Messages.text("count", pinatas.killAll()));
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private int doctor(CommandContext<CommandSourceStack> ctx) {
+        plugin.doctor().forEach(sender(ctx)::sendPlainMessage);
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private int resolvePayout(CommandContext<CommandSourceStack> ctx) {
+        final boolean done = plugin.resolvePayout(StringArgumentType.getString(ctx, "id"));
+        sender(ctx).sendPlainMessage(done ? "Marked as checked." : "No unfinished payout has that id.");
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private int backup(CommandContext<CommandSourceStack> ctx) {
+        sender(ctx).sendPlainMessage(plugin.backupNow() ? "Backup made and checked." : "The backup FAILED, see the console.");
         return Command.SINGLE_SUCCESS;
     }
 

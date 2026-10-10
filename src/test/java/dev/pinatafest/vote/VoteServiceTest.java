@@ -122,6 +122,23 @@ class VoteServiceTest {
     }
 
     @Test
+    void queuedRewardsArePaidOnceAndTheQueueStaysEmptyAfterARestart() throws Exception {
+        final Logger log = Logger.getAnonymousLogger();
+        store.load(log, 3);
+        service.receive("Alex", "SiteB");
+        service.payQueued(server.addPlayer("Alex"));
+        assertEquals(List.of("record Alex SiteB 1"), ran);
+        store.close(log);
+
+        final VoteStore again = new VoteStore(store.databaseFile().resolveSibling("votes.yml"));
+        again.load(log, 3);
+        assertTrue(again.find("Alex").queue().isEmpty());
+        assertEquals(1, again.find("Alex").total());
+        assertTrue(again.journal().unknown().isEmpty());
+        again.close(log);
+    }
+
+    @Test
     void queueStopsAtTheLimitButVotesKeepCounting() {
         service.receive("Alex", "A");
         service.receive("Alex", "B");
@@ -143,19 +160,22 @@ class VoteServiceTest {
     @Test
     void storeSurvivesARestart(@TempDir Path dir) throws Exception {
         final VoteStore first = new VoteStore(dir.resolve("data.yml"));
+        first.load(Logger.getAnonymousLogger(), 3);
         final VoteStore.Entry entry = first.entry("Steve");
         entry.addVote(1234L);
         entry.addVote(1235L);
         entry.queue().add(new VoteStore.Queued("SiteA", 99L));
         first.setPinataVotes(7);
-        first.write(first.snapshot());
+        assertTrue(first.flush(Logger.getAnonymousLogger()));
+        first.close(Logger.getAnonymousLogger());
 
         final VoteStore second = new VoteStore(dir.resolve("data.yml"));
-        second.load(Logger.getAnonymousLogger());
+        second.load(Logger.getAnonymousLogger(), 3);
         assertEquals(2, second.find("steve").total());
         assertEquals(1235L, second.find("steve").lastVote());
         assertEquals("SiteA", second.find("steve").queue().get(0).service());
         assertEquals(7, second.pinataVotes());
+        second.close(Logger.getAnonymousLogger());
     }
 
     @Test

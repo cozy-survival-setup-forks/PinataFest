@@ -13,7 +13,6 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class StoreSafetyTest {
@@ -27,42 +26,6 @@ class StoreSafetyTest {
         try (Stream<Path> list = Files.list(dir)) {
             return list.filter(p -> p.getFileName().toString().startsWith(prefix)).count();
         }
-    }
-
-    @Test
-    void namesWithDotsStayApart() throws IOException {
-        final Path file = dir.resolve("votes.yml");
-        final VoteStore store = new VoteStore(file);
-        store.entry("Notch").addVote(1);
-        store.entry("Notch").addVote(2);
-        store.entry("Notch.total").addVote(3);
-        store.entry(".Steve").addVote(4);
-        store.entry("Steve").addVote(5);
-        store.entry("Steve").queue().add(new VoteStore.Queued("SiteA", 6));
-        store.write(store.snapshot());
-
-        final VoteStore loaded = new VoteStore(file);
-        loaded.load(LOG);
-        assertEquals(2, loaded.find("Notch").total());
-        assertEquals(1, loaded.find("Notch.total").total());
-        assertEquals(1, loaded.find(".Steve").total());
-        assertTrue(loaded.find(".Steve").queue().isEmpty());
-        assertEquals(1, loaded.find("Steve").queue().size());
-    }
-
-    @Test
-    void aBrokenVotesFileIsKeptNotReplaced() throws IOException {
-        final Path file = dir.resolve("votes.yml");
-        Files.writeString(file, "players:\n  Steve: [unclosed\n");
-        final VoteStore store = new VoteStore(file);
-        store.load(LOG);
-        assertNull(store.find("Steve"));
-        assertEquals(1, files("votes.yml.broken-"));
-
-        store.entry("Alex").addVote(1);
-        store.write(store.snapshot());
-        assertEquals(1, files("votes.yml.broken-"));
-        assertNotNull(Files.readString(file));
     }
 
     @Test

@@ -40,16 +40,19 @@ class MonthlyVotesTest {
     void theMonthAndCountsSurviveARestart() throws Exception {
         final Path file = dir.resolve("votes.yml");
         final VoteStore store = new VoteStore(file);
+        store.load(Logger.getAnonymousLogger(), 3);
         store.rollover("2026-09");
         store.entry("Steve").addVote(1);
-        store.write(store.snapshot());
+        assertTrue(store.flush(Logger.getAnonymousLogger()));
+        store.close(Logger.getAnonymousLogger());
 
         final VoteStore loaded = new VoteStore(file);
-        loaded.load(Logger.getAnonymousLogger());
+        loaded.load(Logger.getAnonymousLogger(), 3);
         assertEquals(1, loaded.monthly("Steve"));
         assertFalse(loaded.rollover("2026-09"));
         assertTrue(loaded.rollover("2026-10"));
         assertEquals(0, loaded.monthly("Steve"));
+        loaded.close(Logger.getAnonymousLogger());
     }
 
     @Test
